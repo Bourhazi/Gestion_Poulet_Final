@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Poulet.Api/Poulet.Api.csproj" />
+    <Project Path="src/Poulet.Application/Poulet.Application.csproj" />
+    <Project Path="src/Poulet.Domain/Poulet.Domain.csproj" />
+    <Project Path="src/Poulet.Infrastructure/Poulet.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Poulet.Tests/Poulet.Tests.csproj" />
+  </Folder>
+</Solution>

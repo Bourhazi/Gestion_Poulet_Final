@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/node_modules/
+web/dist/
+web/refactor-backup/
+web/refactor-staging/
+**/*.db*
+**/App_Data/
+**/TestResults/
+.packages/
+.npm-cache/
+**/*.tsbuildinfo
+artifacts/
+src/Poulet.Api/wwwroot/*
+!src/Poulet.Api/wwwroot/README.txt
