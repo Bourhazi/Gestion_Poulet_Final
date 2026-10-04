@@ -6,6 +6,7 @@ import {
   clientAvailableQuantity,
   clientStockMovements,
 } from "../src/utils/clientStock.ts";
+import { money, qty } from "../src/utils/format.ts";
 
 const data = {
   suppliers: [{ id: 1, name: "Supplier" }],
@@ -142,4 +143,24 @@ test("external allocations increase only the selected client's available quantit
   assert.deepEqual(clientStockMovements(purchases, 2), [
     { date: "2026-10-02", quantity: 30, chickenType: "normal" },
   ]);
+});
+
+test("feed records include unit price and do not accept a client-provided total", () => {
+  const editor = createEditor("feed", undefined, dependencies);
+  Object.assign(editor.values, {
+    chamberId: "4",
+    quantity: "2",
+    unit: "sac",
+    unitPrice: "1500",
+    feedType: "Starter",
+  });
+  const payload = serializeEditor(editor);
+  assert.equal(payload.unitPrice, 1500);
+  assert.equal(payload.unit, "sac");
+  assert.equal(payload.cost, undefined);
+});
+
+test("money formatting safely handles values missing from older API responses", () => {
+  assert.equal(money(undefined), "0 DA");
+  assert.equal(qty(undefined), "0");
 });

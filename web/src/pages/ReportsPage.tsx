@@ -6,14 +6,29 @@ import { money, qty } from "../utils/format";
 export function ReportsPage() {
   const { t, report, empty } = usePage();
 
-  return report ? (
+  // An API instance may be restarted after the web bundle is deployed. Until
+  // then, older report responses do not contain the new Feed breakdown.
+  const values = report && {
+    feedSoldCost: report.feedCost ?? 0,
+    feedPeriodCost: report.feedPeriodCost ?? report.feedCost ?? 0,
+    feedStockCost: report.feedStockCost ?? 0,
+    otherExpenses: report.otherExpenses ?? report.crateCost ?? 0,
+    losses: report.losses ?? 0,
+    grossProfit: report.grossProfit ?? report.revenue - report.costOfGoods,
+  };
+
+  return report && values ? (
     <>
       <Cards
         items={[
           [t("revenue"), money(report.revenue)],
           [t("purchasesCost"), money(report.costOfGoods)],
-          [t("feedCost"), money(report.feedCost)],
-          [t("crateCosts"), money(report.crateCost)],
+          [t("feedSoldCost"), money(values.feedSoldCost)],
+          [t("feedPeriodCost"), money(values.feedPeriodCost)],
+          [t("feedStockCost"), money(values.feedStockCost)],
+          [t("otherExpenses"), money(values.otherExpenses)],
+          [t("losses"), money(values.losses)],
+          [t("grossProfit"), money(values.grossProfit)],
           [t("profit"), money(report.netProfit)],
           [t("sales") + " kg", qty(report.chickenKg)],
           [t("paidMonday"), money(report.paidMonday)],

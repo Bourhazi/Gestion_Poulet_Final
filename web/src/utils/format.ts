@@ -8,10 +8,10 @@ export const monday = () => {
   d.setDate(d.getDate() + ((8 - d.getDay()) % 7));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-export const money = (n: number) =>
-  `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} DA`;
-export const qty = (n: number) =>
-  n.toLocaleString(undefined, { maximumFractionDigits: 3 });
+export const money = (n?: number | null) =>
+  `${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} DA`;
+export const qty = (n?: number | null) =>
+  (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 3 });
 export const revenue = (s: Sale) =>
   s.type === "lundi"
     ? s.lines.reduce((n, l) => n + l.quantity * l.unitPrice, 0)

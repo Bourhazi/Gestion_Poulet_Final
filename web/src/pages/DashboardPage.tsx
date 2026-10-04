@@ -1,6 +1,7 @@
 import { usePage } from "../hooks/usePage";
 import { Cards } from "../components/ui/Cards";
 import { money, qty, revenue, today } from "../utils/format";
+import { feedCostForSales, soldChickenCost } from "../utils/feedCost";
 
 export function DashboardPage({
   variant: page = "dashboard",
@@ -14,12 +15,34 @@ export function DashboardPage({
   const monthSales = data.sales.filter(
     (s) => s.date.slice(0, 7) === today().slice(0, 7),
   );
+  const salesRevenue = data.sales.reduce((sum, sale) => sum + revenue(sale), 0);
+  const chickenCost = soldChickenCost(data.sales);
+  const feedCost = feedCostForSales(data.purchases, data.feed, data.sales);
+  const otherExpenses = data.sales.reduce((sum, sale) => sum + sale.crateCost, 0);
+  const losses = data.purchases.reduce(
+    (sum, purchase) =>
+      sum +
+      (purchase.departureWeight != null && purchase.actualWeight != null
+        ? Math.max(purchase.departureWeight - purchase.actualWeight, 0) *
+          purchase.unitPrice
+        : 0),
+    0,
+  );
+  const grossProfit = salesRevenue - chickenCost;
+  const netProfit = grossProfit - feedCost - otherExpenses - losses;
   return (
     <>
       <Cards
         items={
           page === "dashboard"
             ? [
+                [t("revenue"), money(salesRevenue)],
+                [t("purchasesCost"), money(chickenCost)],
+                [t("feedSoldCost"), money(feedCost)],
+                [t("otherExpenses"), money(otherExpenses)],
+                [t("losses"), money(losses)],
+                [t("grossProfit"), money(grossProfit)],
+                [t("profit"), money(netProfit)],
                 [t("stock"), qty(total) + " kg"],
                 [
                   t("sales") + " · " + today(),

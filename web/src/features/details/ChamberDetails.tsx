@@ -7,6 +7,10 @@ export type ChamberProfit = {
   purchaseCost: number;
   costOfGoods: number;
   feedCost: number;
+  feedSoldCost?: number;
+  feedStockCost?: number;
+  feedQuantityKg?: number;
+  feedQuantityBags?: number;
   netProfit: number;
   weightDifference: number;
 };
@@ -28,6 +32,10 @@ export function ChamberDetails({
   const sales = data.sales.filter((s) =>
     s.allocations.some((a) => a.chamberId === c.id),
   );
+  const feedSoldCost = profit.feedSoldCost ?? profit.feedCost ?? 0;
+  const feedStockCost = profit.feedStockCost ?? 0;
+  const feedQuantityKg = profit.feedQuantityKg ?? 0;
+  const feedQuantityBags = profit.feedQuantityBags ?? 0;
 
   return (
     <>
@@ -39,7 +47,12 @@ export function ChamberDetails({
           [t("bibi"), qty(c.bibi) + " kg"],
           [t("revenue"), money(profit.revenue)],
           [t("purchasesCost"), money(profit.costOfGoods)],
-          [t("feedCost"), money(profit.feedCost)],
+          [t("feedSoldCost"), money(feedSoldCost)],
+          [t("feedStockCost"), money(feedStockCost)],
+          [
+            t("feedQuantity"),
+            `${qty(feedQuantityKg)} kg · ${qty(feedQuantityBags)} ${t("sac")}`,
+          ],
           [t("profit"), money(profit.netProfit)],
         ]}
       />

@@ -87,13 +87,14 @@ export function createEditor(
           ];
       break;
     case "feed":
-      values.cost = "0";
-      values.quantity = "0";
+      values = { ...values, quantity: "", unit: "kg", unitPrice: "0" };
       fields = [
         select("chamberId", data.chambers, false),
         { key: "date", type: "date" },
-        numeric("quantity"),
-        numeric("cost"),
+        numeric("quantity", false, 0.001),
+        choice("unit", ["kg", "sac"]),
+        numeric("unitPrice"),
+        { key: "feedType", optional: true },
         { key: "notes", type: "textarea", optional: true },
       ];
       break;

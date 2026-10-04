@@ -8,7 +8,7 @@ public sealed record SaveClient(int Id, string Name, string? Phone, string Type)
 public sealed record SaveChamber(int Id, string Name, decimal Capacity) : IRequest<int>, ICommand;
 public sealed record AllocationInput(int? ChamberId, int? ClientId, decimal Quantity);
 public sealed record SavePurchase(int Id, int? SupplierId, DateOnly Date, decimal Quantity, decimal UnitPrice, string ChickenType, decimal? DepartureWeight, decimal? ActualWeight, string? Notes, List<AllocationInput> Allocations) : IRequest<int>, ICommand;
-public sealed record AddFeed(int ChamberId, DateOnly Date, decimal Quantity, decimal Cost, string? Notes) : IRequest<int>, ICommand;
+public sealed record AddFeed(int ChamberId, DateOnly Date, decimal Quantity, string Unit, decimal UnitPrice, string? FeedType, string? Notes) : IRequest<int>, ICommand;
 public sealed record AddSale(DateOnly Date, string Type, int? ClientId, string? ClientName, int? ChamberId, string ChickenType, string Mode, decimal Quantity, decimal UnitPrice, int Pieces, decimal CrateCost, string? Notes) : IRequest<int>, ICommand;
 public sealed record AddMondayLine(int SaleId, string? ClientName, decimal Quantity, decimal UnitPrice, bool Paid, string Mode, List<string> Numbers, string? Notes) : IRequest<int>, ICommand;
 public sealed record TogglePayment(int SaleId, int LineId) : IRequest<bool>, ICommand;
@@ -43,8 +43,10 @@ public sealed class MasterDataHandlers(IRepository db) : IRequestHandler<SaveSup
     }
     public async Task<int> Handle(AddFeed r, CancellationToken ct)
     {
-        Rules.Require(await db.Find<Chamber>(r.ChamberId, ct) != null, "Chamber not found."); Rules.NonNegative(r.Quantity, "Quantity"); Rules.NonNegative(r.Cost, "Cost");
-        var e = new Feed { ChamberId = r.ChamberId, Date = r.Date, Quantity = r.Quantity, Cost = r.Cost, Notes = r.Notes }; db.Add(e); await db.Save(ct); return e.Id;
+        Rules.Require(await db.Find<Chamber>(r.ChamberId, ct) != null, "Chamber not found."); Rules.Positive(r.Quantity, "Feed quantity"); Rules.NonNegative(r.UnitPrice, "Feed unit price");
+        Rules.Require(r.Unit is "kg" or "sac", "Feed unit must be kg or sac.");
+        var e = new Feed { ChamberId = r.ChamberId, Date = r.Date, Quantity = r.Quantity, Unit = r.Unit, UnitPrice = r.UnitPrice, Cost = r.Quantity * r.UnitPrice, FeedType = string.IsNullOrWhiteSpace(r.FeedType) ? null : r.FeedType.Trim(), Notes = r.Notes };
+        db.Add(e); await db.Save(ct); return e.Id;
     }
 }
 public sealed class PurchaseHandler(IRepository db) : IRequestHandler<SavePurchase, int>

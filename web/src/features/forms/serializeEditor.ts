@@ -15,7 +15,6 @@ export function serializeEditor(editor: Editor): Record<string, unknown> {
     "crateCost",
     "departureWeight",
     "actualWeight",
-    "cost",
     "capacity",
   ])
     if (key in v) body[key] = v[key] === "" ? null : Number(v[key]);

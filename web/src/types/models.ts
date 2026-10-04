@@ -42,7 +42,10 @@ export type Feed = {
   chamberId: number;
   date: string;
   quantity: number;
+  unit: "kg" | "sac";
+  unitPrice: number;
   cost: number;
+  feedType?: string;
   notes?: string;
 };
 export type MondayLine = {
@@ -86,6 +89,10 @@ export type Report = {
   revenue: number;
   costOfGoods: number;
   feedCost: number;
+  feedPeriodCost: number;
+  feedStockCost: number;
+  otherExpenses: number;
+  losses: number;
   crateCost: number;
   grossProfit: number;
   netProfit: number;

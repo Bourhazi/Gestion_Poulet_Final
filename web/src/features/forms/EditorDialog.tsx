@@ -1,6 +1,6 @@
 import { useWorkspace } from "../../app/AppContext";
 import { Dialog } from "../../components/ui/Dialog";
-import { monday, qty, options } from "../../utils/format";
+import { monday, money, qty, options } from "../../utils/format";
 export function EditorDialog() {
   const { t, data, error, busy, editor, setEditor, submitEditor } =
     useWorkspace();
@@ -216,6 +216,11 @@ export function EditorDialog() {
               + {t("add")}
             </button>
           </div>
+        )}
+        {editor.kind === "feed" && (
+          <p>
+            {t("totalCost")}: {money(Number(editor.values.quantity || 0) * Number(editor.values.unitPrice || 0))}
+          </p>
         )}
         <footer>
           <button

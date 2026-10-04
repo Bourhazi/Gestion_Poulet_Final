@@ -17,7 +17,17 @@ public sealed class Purchase : Entity
     public List<Allocation> Allocations { get; set; } = [];
 }
 public sealed class Allocation : Entity { public int PurchaseId { get; set; } public int? ChamberId { get; set; } public int? ClientId { get; set; } public decimal Quantity { get; set; } }
-public sealed class Feed : Entity { public int ChamberId { get; set; } public DateOnly Date { get; set; } public decimal Quantity { get; set; } public decimal Cost { get; set; } public string? Notes { get; set; } }
+public sealed class Feed : Entity
+{
+    public int ChamberId { get; set; }
+    public DateOnly Date { get; set; }
+    public decimal Quantity { get; set; }
+    public string Unit { get; set; } = "kg";
+    public decimal UnitPrice { get; set; }
+    public decimal Cost { get; set; }
+    public string? FeedType { get; set; }
+    public string? Notes { get; set; }
+}
 public sealed class Sale : Entity
 {
     public DateOnly Date { get; set; }

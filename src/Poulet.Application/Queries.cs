@@ -22,17 +22,23 @@ public sealed class GetReportHandler(IRepository db) : IRequestHandler<GetReport
     public async Task<object> Handle(GetReport request, CancellationToken ct)
     {
         Rules.Require(request.From <= request.To, "Invalid date range.");
-        var sales = (await db.List<Sale>(ct)).Where(s => s.Date >= request.From && s.Date <= request.To).ToList();
-        var purchases = (await db.List<Purchase>(ct)).Where(p => p.Date >= request.From && p.Date <= request.To).ToList();
+        var allSales = await db.List<Sale>(ct);
+        var allPurchases = await db.List<Purchase>(ct);
+        var allFeed = await db.List<Feed>(ct);
+        var sales = allSales.Where(s => s.Date >= request.From && s.Date <= request.To).ToList();
+        var purchases = allPurchases.Where(p => p.Date >= request.From && p.Date <= request.To).ToList();
         var suppliers = await db.List<Supplier>(ct);
         var clients = await db.List<Client>(ct);
-        var feed = (await db.List<Feed>(ct)).Where(f => f.Date >= request.From && f.Date <= request.To).Sum(f => f.Cost);
+        var feedPeriod = allFeed.Where(f => f.Date >= request.From && f.Date <= request.To).Sum(f => f.Cost);
+        var feedSold = Inventory.FeedCostForSales(allPurchases, allFeed, sales);
+        var feedStock = allFeed.Sum(f => f.Cost) - Inventory.FeedCostForSales(allPurchases, allFeed, allSales);
         var revenue = sales.Sum(Inventory.Revenue);
         var cost = sales.Sum(Inventory.SoldCost);
         var crates = sales.Sum(s => s.CrateCost);
+        var losses = purchases.Sum(p => p.DepartureWeight.HasValue && p.ActualWeight.HasValue ? Math.Max(p.DepartureWeight.Value - p.ActualWeight.Value, 0) * p.UnitPrice : 0);
         return new {
             request.From, request.To, ChickenKg = sales.Sum(s => s.Type == "lundi" ? s.Lines.Sum(l => l.Quantity) : s.Quantity),
-            Revenue = revenue, CostOfGoods = cost, FeedCost = feed, CrateCost = crates, GrossProfit = revenue - cost, NetProfit = revenue - cost - feed - crates,
+            Revenue = revenue, CostOfGoods = cost, FeedCost = feedSold, FeedPeriodCost = feedPeriod, FeedStockCost = feedStock, OtherExpenses = crates, Losses = losses, CrateCost = crates, GrossProfit = revenue - cost, NetProfit = revenue - cost - feedSold - crates - losses,
             PaidMonday = sales.SelectMany(s => s.Lines).Where(l => l.Paid).Sum(l => l.Quantity * l.UnitPrice),
             UnpaidMonday = sales.SelectMany(s => s.Lines).Where(l => !l.Paid).Sum(l => l.Quantity * l.UnitPrice),
             ByDay = sales.Select(s => new { s.Date, Revenue = Inventory.Revenue(s) }).GroupBy(s => s.Date).OrderBy(g => g.Key).Select(g => new { Date = g.Key, Revenue = g.Sum(s => s.Revenue) }),

@@ -12,7 +12,10 @@ export function FeedPage() {
         t("date"),
         t("chamberId"),
         t("quantity"),
-        t("cost"),
+        t("unit"),
+        t("unitPrice"),
+        t("totalCost"),
+        t("feedType"),
         t("notes"),
         "",
       ]}
@@ -21,14 +24,23 @@ export function FeedPage() {
         .filter(
           (f) =>
             (!date || f.date === date) &&
-            matches(name(data.chambers, f.chamberId) + " " + (f.notes || "")),
+            matches(
+              name(data.chambers, f.chamberId) +
+                " " +
+                (f.feedType || "") +
+                " " +
+                (f.notes || ""),
+            ),
         )
         .sort((a, b) => b.id - a.id)
         .map((f) => [
           f.date,
           name(data.chambers, f.chamberId),
           qty(f.quantity),
+          t(f.unit),
+          money(f.unitPrice),
           money(f.cost),
+          f.feedType || "—",
           f.notes,
           actions("feed", f.id),
         ])}

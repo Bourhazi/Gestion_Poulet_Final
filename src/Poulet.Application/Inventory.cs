@@ -15,4 +15,13 @@ public static class Inventory
     }
     public static decimal Revenue(Sale s) => s.Type == "lundi" ? s.Lines.Sum(l => l.Quantity * l.UnitPrice) : s.Quantity * s.UnitPrice;
     public static decimal SoldCost(Sale s) => s.Type == "lundi" ? s.CostOfGoods * s.Lines.Sum(l => l.Quantity) / s.Quantity : s.CostOfGoods;
+    public static decimal FeedCostForSales(IEnumerable<Purchase> purchases, IEnumerable<Feed> feed, IEnumerable<Sale> sales)
+    {
+        var received = purchases.SelectMany(p => p.Allocations).Where(a => a.ChamberId.HasValue).GroupBy(a => a.ChamberId!.Value).ToDictionary(g => g.Key, g => g.Sum(a => a.Quantity));
+        var feedByChamber = feed.GroupBy(f => f.ChamberId).ToDictionary(g => g.Key, g => g.Sum(f => f.Cost));
+        return sales.SelectMany(s => s.Allocations).Sum(a =>
+            a.ChamberId != 0 && received.TryGetValue(a.ChamberId, out var quantity) && quantity > 0 && feedByChamber.TryGetValue(a.ChamberId, out var cost)
+                ? a.Quantity * cost / quantity
+                : 0);
+    }
 }

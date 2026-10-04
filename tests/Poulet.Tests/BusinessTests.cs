@@ -70,13 +70,15 @@ public sealed class BusinessTests : IDisposable
         var chamber=await Stock(); var id=await Send(new AddSale(Monday,"lundi",null,null,null,"normal","vivant",20,0,10,5,null));
         await Send(new AddMondayLine(id,"Client",10,20,true,"vivant",["01"],null));
         await Send(Sale(chamber,10));
-        await Send(new AddFeed(chamber,Monday,1,3,null));
+        await Send(new AddFeed(chamber,Monday,1,"kg",3,null,null));
         await Send(new AddSale(Monday.AddDays(1),"detail",null,null,chamber,"normal","vivant",5,30,0,0,null));
         var json=System.Text.Json.JsonSerializer.SerializeToElement(await Send(new GetReport(Monday,Monday)));
         Assert.Equal(400,json.GetProperty("Revenue").GetDecimal());
         Assert.Equal(200,json.GetProperty("CostOfGoods").GetDecimal());
         Assert.Equal(200,json.GetProperty("GrossProfit").GetDecimal());
-        Assert.Equal(192,json.GetProperty("NetProfit").GetDecimal());
+        Assert.Equal(194.1m,json.GetProperty("NetProfit").GetDecimal());
+        Assert.Equal(3,json.GetProperty("FeedPeriodCost").GetDecimal());
+        Assert.Equal(0.9m,json.GetProperty("FeedCost").GetDecimal());
         Assert.Equal(20,json.GetProperty("ChickenKg").GetDecimal());
         Assert.Equal(200,json.GetProperty("PaidMonday").GetDecimal());
         Assert.Equal(0,json.GetProperty("UnpaidMonday").GetDecimal());
@@ -88,6 +90,13 @@ public sealed class BusinessTests : IDisposable
         var a=await Send(new SaveChamber(0,"A",100)); var b=await Send(new SaveChamber(0,"B",100));
         await Send(new SavePurchase(0,null,Monday,100,10,"normal",100,90,null,[new(a,null,50),new(b,null,50)]));
         var id=await Send(Sale(a,10)); Assert.Equal(90,(await Send(new GetSnapshot())).Sales.Single(s=>s.Id==id).CostOfGoods);
+    }
+    [Fact] public async Task Report_includes_weight_losses_as_an_expense()
+    {
+        var chamber=await Send(new SaveChamber(0,"A",100));
+        await Send(new SavePurchase(0,null,Monday,100,10,"normal",100,90,null,[new(chamber,null,100)]));
+        var json=System.Text.Json.JsonSerializer.SerializeToElement(await Send(new GetReport(Monday,Monday)));
+        Assert.Equal(100,json.GetProperty("Losses").GetDecimal());
     }
     [Fact] public async Task Passwords_are_hashed_and_login_validates_credentials()
     {
@@ -104,9 +113,11 @@ public sealed class BusinessTests : IDisposable
     }
     [Fact] public async Task Chamber_profit_and_deduction_preview_are_consistent()
     {
-        var c=await Stock(); await Send(Sale(c,10)); await Send(new AddFeed(c,Monday,1,5,null));
+        var c=await Stock(); await Send(Sale(c,10)); await Send(new AddFeed(c,Monday,1,"kg",5,null,null));
         var report=System.Text.Json.JsonSerializer.SerializeToElement(await Send(new GetChamberProfit(c)));
-        Assert.Equal(95,report.GetProperty("NetProfit").GetDecimal());
+        Assert.Equal(99.5m,report.GetProperty("NetProfit").GetDecimal());
+        Assert.Equal(4.5m,report.GetProperty("FeedStockCost").GetDecimal());
+        Assert.Equal(1,report.GetProperty("FeedQuantityKg").GetDecimal());
         var preview=System.Text.Json.JsonSerializer.SerializeToElement(await Send(new GetDeductionPlan(95,"normal")));
         Assert.Equal(5,preview.GetProperty("Uncovered").GetDecimal());
     }

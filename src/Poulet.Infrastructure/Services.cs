@@ -44,7 +44,7 @@ public static class DependencyInjection
     }
     public static async Task InitializeDatabase(IServiceProvider services, bool development, IConfiguration config)
     {
-        using var scope = services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>(); await db.Database.EnsureCreatedAsync();
+        using var scope = services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDbContext>(); await db.Database.EnsureCreatedAsync(); await EnsureFeedColumns(db);
         if (!await db.Set<User>().AnyAsync())
         {
             var password = config["Seed:AdminPassword"];
@@ -52,5 +52,29 @@ public static class DependencyInjection
             db.Add(new User { Username = "admin", Role = "admin", PasswordHash = scope.ServiceProvider.GetRequiredService<IPasswords>().Hash(password) });
         }
         if (!await db.Set<Chamber>().AnyAsync(c => c.IsSouk)) db.Add(new Chamber { Name = "SOUK", IsSouk = true }); await db.SaveChangesAsync();
+    }
+    private static async Task EnsureFeedColumns(AppDbContext db)
+    {
+        var connection = db.Database.GetDbConnection();
+        var close = connection.State != System.Data.ConnectionState.Open;
+        if (close) await connection.OpenAsync();
+        try
+        {
+            var columns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "PRAGMA table_info(Feed)";
+                await using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
+            }
+            foreach (var (name, definition) in new[] { ("Unit", "TEXT NOT NULL DEFAULT 'kg'"), ("UnitPrice", "TEXT NOT NULL DEFAULT 0"), ("FeedType", "TEXT NULL") })
+            {
+                if (columns.Contains(name)) continue;
+                await using var command = connection.CreateCommand();
+                command.CommandText = $"ALTER TABLE Feed ADD COLUMN {name} {definition}";
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+        finally { if (close) await connection.CloseAsync(); }
     }
 }
