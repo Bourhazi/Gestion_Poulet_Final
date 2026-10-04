@@ -80,6 +80,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     crateCosts: "Coût des caisses",
     available: "Disponible",
     kg: "kg",
+    stockMovements: "Historique des mouvements de stock",
+    externalAllocation: "Allocation vers local externe",
   },
   en: {
     dashboard: "Dashboard",
@@ -161,6 +163,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     crateCosts: "Crate costs",
     available: "Available",
     kg: "kg",
+    stockMovements: "Stock movement history",
+    externalAllocation: "External warehouse allocation",
   },
   ar: {
     dashboard: "لوحة التحكم",
@@ -242,6 +246,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     crateCosts: "تكلفة الصناديق",
     available: "متاح",
     kg: "كغ",
+    stockMovements: "سجل حركات المخزون",
+    externalAllocation: "تخصيص إلى مستودع خارجي",
   },
 };
 export const translator = (lang: Language) => (key: string) =>

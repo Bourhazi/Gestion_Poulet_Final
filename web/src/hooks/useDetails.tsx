@@ -7,9 +7,10 @@ import {
   ChamberDetails,
   type ChamberProfit,
 } from "../features/details/ChamberDetails";
+import { ClientDetails } from "../features/details/ClientDetails";
 import { useState, type ReactNode } from "react";
 import { api } from "../services/api";
-import type { Chamber, Purchase, Snapshot } from "../types/models";
+import type { Chamber, Person, Purchase, Snapshot } from "../types/models";
 
 type Dependencies = {
   data: Snapshot | null;
@@ -33,6 +34,10 @@ export function useDetails({ data, t, setError }: Dependencies) {
     if (!data) return;
     setDetail(<PurchaseDetails purchase={p} data={data} t={t} />);
   }
+  function clientDetail(client: Person) {
+    if (!data) return;
+    setDetail(<ClientDetails client={client} data={data} t={t} />);
+  }
   async function chamberDetail(c: Chamber) {
     if (!data) return;
     setError("");
@@ -46,5 +51,12 @@ export function useDetails({ data, t, setError }: Dependencies) {
     }
   }
 
-  return { detail, setDetail, receipt, purchaseDetail, chamberDetail };
+  return {
+    detail,
+    setDetail,
+    receipt,
+    purchaseDetail,
+    chamberDetail,
+    clientDetail,
+  };
 }

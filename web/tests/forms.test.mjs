@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createEditor } from "../src/features/forms/createEditor.ts";
 import { serializeEditor } from "../src/features/forms/serializeEditor.ts";
+import {
+  clientAvailableQuantity,
+  clientStockMovements,
+} from "../src/utils/clientStock.ts";
 
 const data = {
   suppliers: [{ id: 1, name: "Supplier" }],
@@ -108,4 +112,34 @@ test("admin users have no linked client; wholesale choices exclude retail client
   ]);
   Object.assign(editor.values, { role: "admin", clientId: "2" });
   assert.equal(serializeEditor(editor).clientId, null);
+});
+
+test("external purchase allocations can be attributed to a selected client", () => {
+  const editor = createEditor("purchases", undefined, dependencies);
+  editor.allocations = [{ clientId: 2, chamberId: null, quantity: 30 }];
+  editor.values.quantity = "30";
+  assert.deepEqual(serializeEditor(editor).allocations, [
+    { chamberId: null, clientId: 2, quantity: 30 },
+  ]);
+});
+
+test("external allocations increase only the selected client's available quantity", () => {
+  const purchases = [
+    {
+      id: 1,
+      date: "2026-10-02",
+      quantity: 100,
+      unitPrice: 10,
+      chickenType: "normal",
+      allocations: [
+        { clientId: 2, quantity: 30 },
+        { clientId: 3, quantity: 70 },
+      ],
+    },
+  ];
+  assert.equal(clientAvailableQuantity(purchases, 2), 30);
+  assert.equal(clientAvailableQuantity(purchases, 3), 70);
+  assert.deepEqual(clientStockMovements(purchases, 2), [
+    { date: "2026-10-02", quantity: 30, chickenType: "normal" },
+  ]);
 });

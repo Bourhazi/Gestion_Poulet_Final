@@ -66,8 +66,14 @@ export function useAppController() {
     setError,
     mutate,
   });
-  const { detail, setDetail, receipt, purchaseDetail, chamberDetail } =
-    useDetails({ data, t, setError });
+  const {
+    detail,
+    setDetail,
+    receipt,
+    purchaseDetail,
+    chamberDetail,
+    clientDetail,
+  } = useDetails({ data, t, setError });
   const matches = (s: string) => s.toLowerCase().includes(search.toLowerCase());
   const pages = admin
     ? [
@@ -134,6 +140,7 @@ export function useAppController() {
     receipt,
     purchaseDetail,
     chamberDetail,
+    clientDetail,
     matches,
     pages,
     lot,
