@@ -32,7 +32,9 @@ public sealed class ApiTests : IClassFixture<ApiFactory>
     {
         using var client=Client(); await Csrf(client);
         Assert.Equal(HttpStatusCode.OK,(await client.PostAsJsonAsync("/api/auth/login",new Login("admin","admin123"))).StatusCode);
-        await Csrf(client); Assert.Equal(HttpStatusCode.OK,(await client.GetAsync("/api/snapshot")).StatusCode);
+        await Csrf(client);
+        var snapshot=await client.GetFromJsonAsync<JsonElement>("/api/snapshot");
+        Assert.Equal(new[] { "chambers", "clients", "feed", "purchases", "sales", "suppliers", "users" }, snapshot.EnumerateObject().Select(p=>p.Name).OrderBy(n=>n).ToArray());
         Assert.Equal(HttpStatusCode.NoContent,(await client.PostAsync("/api/auth/logout",null)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized,(await client.GetAsync("/api/snapshot")).StatusCode);
     }

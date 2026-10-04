@@ -72,26 +72,6 @@ export type Sale = {
   allocations: Allocation[];
   lines: MondayLine[];
 };
-export type ProductPurchase = {
-  id: number;
-  product: string;
-  variety: string;
-  supplierId?: number;
-  date: string;
-  quantity: number;
-  unitPrice: number;
-  eggsPerTray: number;
-  notes?: string;
-};
-export type ProductSale = ProductPurchase & {
-  mode: string;
-  costOfGoods: number;
-};
-export type ProductStock = {
-  product: string;
-  variety: string;
-  quantity: number;
-};
 export type Snapshot = {
   suppliers: Person[];
   clients: Person[];
@@ -99,9 +79,6 @@ export type Snapshot = {
   purchases: Purchase[];
   feed: Feed[];
   sales: Sale[];
-  productPurchases: ProductPurchase[];
-  productSales: ProductSale[];
-  productStocks: ProductStock[];
   users: User[];
 };
 export type Report = {

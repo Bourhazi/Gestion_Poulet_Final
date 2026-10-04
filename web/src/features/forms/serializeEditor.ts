@@ -17,7 +17,6 @@ export function serializeEditor(editor: Editor): Record<string, unknown> {
     "actualWeight",
     "cost",
     "capacity",
-    "eggsPerTray",
   ])
     if (key in v) body[key] = v[key] === "" ? null : Number(v[key]);
   if (editor.allocations)
@@ -40,10 +39,6 @@ export function serializeEditor(editor: Editor): Record<string, unknown> {
     body.unitPrice = 0;
   }
   if (editor.kind === "users" && v.role === "admin") body.clientId = null;
-  if (editor.kind.startsWith("egg") && v.mode !== "unite") {
-    body.quantity = Number(v.quantity) * Number(v.eggsPerTray);
-    body.unitPrice = Number(v.unitPrice) / Number(v.eggsPerTray);
-  }
 
   return body;
 }

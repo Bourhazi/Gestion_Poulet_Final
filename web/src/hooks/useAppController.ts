@@ -78,8 +78,6 @@ export function useAppController() {
         "purchases",
         "feed",
         "sales",
-        "olives",
-        "eggs",
         "souk",
         "reports",
         "users",

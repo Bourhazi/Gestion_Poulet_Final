@@ -6,8 +6,6 @@ import { ChambersPage } from "../pages/ChambersPage";
 import { PurchasesPage } from "../pages/PurchasesPage";
 import { FeedPage } from "../pages/FeedPage";
 import { SalesPage } from "../pages/SalesPage";
-import { OlivesPage } from "../pages/OlivesPage";
-import { EggsPage } from "../pages/EggsPage";
 import { SoukPage } from "../pages/SoukPage";
 import { ReportsPage } from "../pages/ReportsPage";
 import { UsersPage } from "../pages/UsersPage";
@@ -20,8 +18,6 @@ const pages = {
   purchases: PurchasesPage,
   feed: FeedPage,
   sales: SalesPage,
-  olives: OlivesPage,
-  eggs: EggsPage,
   souk: SoukPage,
   reports: ReportsPage,
   users: UsersPage,

@@ -6,13 +6,11 @@ import type {
   Sale,
   Snapshot,
   User,
-  ProductPurchase,
-  ProductSale,
 } from "../../types/models";
 import type { Editor, Field } from "../../types/editor";
 import { today, options } from "../../utils/format.ts";
 export type EditableRecord =
-  Person | Chamber | Purchase | Sale | ProductPurchase | ProductSale | User;
+  Person | Chamber | Purchase | Sale | User;
 type Dependencies = {
   data: Snapshot;
   lotId: number | null;
@@ -42,7 +40,7 @@ export function createEditor(
   ): Field => ({ key, options: options(list), optional });
   let values: Record<string, string> = { id: "0", date: today() };
   let fields: Field[] = [];
-  let endpoint = kind;
+  const endpoint = kind;
   let title = t(kind);
   let allocations: Allocation[] | undefined;
   switch (kind) {
@@ -167,58 +165,13 @@ export function createEditor(
       fields = [{ key: "password", type: "password" }];
       title = t("reset");
       break;
-    case "olive-purchase":
-    case "egg-purchase":
-    case "olive-sale":
-    case "egg-sale": {
-      const product = kind.startsWith("egg") ? "egg" : "olive";
-      const purchase = kind.endsWith("purchase");
-      endpoint = purchase ? "product-purchases" : "product-sales";
-      title =
-        t(product === "egg" ? "eggs" : "olives") +
-        " · " +
-        t(purchase ? "purchases" : "sales");
-      values = {
-        ...values,
-        product,
-        variety: product === "egg" ? "egg" : "noire",
-        mode: product === "egg" ? "plateau" : "kg",
-        eggsPerTray: "30",
-        unitPrice: "0",
-      };
-      fields = [
-        { key: "date", type: "date" },
-        ...(purchase ? [select("supplierId", data.suppliers)] : []),
-        ...(product === "olive"
-          ? [
-              choice("variety", ["noire", "verte", "mchermel", "hroure"]),
-              numeric("quantity", false, 0.001),
-              numeric("unitPrice"),
-            ]
-          : [
-              ...(!purchase ? [choice("mode", ["plateau", "unite"])] : []),
-              numeric("eggsPerTray", false, 1),
-              numeric("quantity", false, 1),
-              numeric("unitPrice"),
-            ]),
-        { key: "notes", type: "textarea", optional: true },
-      ];
-      break;
-    }
+    default:
+      throw new Error(`Unknown form: ${kind}`);
   }
   if (existing && kind !== "passwords") {
     for (const [key, value] of Object.entries(existing))
       if (value !== undefined && value !== null && typeof value !== "object")
         values[key] = String(value);
-    if (kind.startsWith("egg")) {
-      const p = existing as ProductSale;
-      values.quantity = String(
-        p.mode === "unite" ? p.quantity : p.quantity / p.eggsPerTray,
-      );
-      values.unitPrice = String(
-        p.mode === "unite" ? p.unitPrice : p.unitPrice * p.eggsPerTray,
-      );
-    }
   }
   return { title, endpoint, values, fields, kind, allocations };
 }

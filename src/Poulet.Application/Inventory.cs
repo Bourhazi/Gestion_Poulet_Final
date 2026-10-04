@@ -13,13 +13,6 @@ public static class Inventory
         var quantity = rows.Sum(r => r.Quantity);
         return quantity == 0 ? 0 : rows.Sum(r => r.Quantity * r.Price) / quantity;
     }
-    public static decimal ProductStock(IEnumerable<ProductPurchase> purchases, IEnumerable<ProductSale> sales, string product, string variety) => purchases.Where(p => p.Product == product && p.Variety == variety).Sum(p => p.Quantity) - sales.Where(s => s.Product == product && s.Variety == variety).Sum(s => s.Quantity);
-    public static decimal ProductCost(IEnumerable<ProductPurchase> purchases, string product, string variety)
-    {
-        var rows = purchases.Where(p => p.Product == product && p.Variety == variety).ToList();
-        var qty = rows.Sum(p => p.Quantity);
-        return qty == 0 ? 0 : rows.Sum(p => p.Quantity * p.UnitPrice) / qty;
-    }
     public static decimal Revenue(Sale s) => s.Type == "lundi" ? s.Lines.Sum(l => l.Quantity * l.UnitPrice) : s.Quantity * s.UnitPrice;
     public static decimal SoldCost(Sale s) => s.Type == "lundi" ? s.CostOfGoods * s.Lines.Sum(l => l.Quantity) / s.Quantity : s.CostOfGoods;
 }

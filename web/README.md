@@ -1,6 +1,6 @@
 # React frontend
 
-Run from `modern/web` with Node.js 24 or later:
+Run from `web` with Node.js 24 or later:
 
 ```powershell
 npm ci
@@ -15,7 +15,7 @@ The development UI runs at http://127.0.0.1:5173 and proxies `/api` to the ASP.N
 src/
   App.tsx                 Application composition and authentication guard
   app/                    Shared context and page selection
-  pages/                  Dashboard, suppliers, clients, sales, products, etc.
+  pages/                  Dashboard, suppliers, clients, chambers, purchases, sales, etc.
   layouts/                Sidebar, header, workspace and filter toolbar
   components/             Reusable controls, tables and dialogs
     ui/                   Table, Cards and accessible Dialog
@@ -31,7 +31,7 @@ src/
 tests/                    Form and request regression tests
 ```
 
-`App.tsx` composes the provider, login screen, layout, current page and dialogs. Each business screen lives in `pages/`. Suppliers/clients and olives/eggs share presentation components with explicit variants to avoid duplicating their table logic.
+`App.tsx` composes the provider, login screen, layout, current page and dialogs. Each business screen lives in `pages/`. Suppliers and clients share presentation components with explicit variants to avoid duplicating their table logic.
 
 `app/PageRouter.tsx` selects the current screen using application state. Navigation preserves the existing behavior; it does not introduce URL routes. API access lives in `services/api.ts`. Page components consume the authenticated workspace; hooks manage state and requests. Pure form configuration and serialization functions can be tested without a browser.
 

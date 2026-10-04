@@ -21,5 +21,4 @@ public sealed class TransactionBehavior<TRequest, TResponse>(IUnitOfWork unit) :
 }
 public sealed record UserDto(int Id, string Username, string Role, int? ClientId);
 public sealed record ChamberStock(int Id, string Name, decimal Capacity, bool IsSouk, decimal Normal, decimal Bibi) { public decimal Total => Normal + Bibi; }
-public sealed record ProductStock(string Product, string Variety, decimal Quantity);
-public sealed record Snapshot(List<Supplier> Suppliers, List<Client> Clients, List<ChamberStock> Chambers, List<Purchase> Purchases, List<Feed> Feed, List<Sale> Sales, List<ProductPurchase> ProductPurchases, List<ProductSale> ProductSales, List<ProductStock> ProductStocks, List<UserDto> Users);
+public sealed record Snapshot(List<Supplier> Suppliers, List<Client> Clients, List<ChamberStock> Chambers, List<Purchase> Purchases, List<Feed> Feed, List<Sale> Sales, List<UserDto> Users);

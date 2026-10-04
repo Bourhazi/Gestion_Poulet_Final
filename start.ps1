@@ -1,14 +1,36 @@
-param([switch]$SkipInstall)
+param([switch]$SkipInstall, [switch]$Reinstall)
 $ErrorActionPreference = 'Stop'
 $taskRoot = $PSScriptRoot
+$taskWebRoot = Join-Path $taskRoot 'web'
+foreach ($taskPort in @(5080, 5173)) {
+    $taskSocket = New-Object System.Net.Sockets.TcpClient
+    $taskPortInUse = $false
+    try { $taskSocket.Connect('127.0.0.1', $taskPort); $taskPortInUse = $true }
+    catch [System.Net.Sockets.SocketException] { }
+    finally { $taskSocket.Dispose() }
+    if ($taskPortInUse) {
+        throw "Port $taskPort is already in use. Stop the previous app with Ctrl+C before starting again."
+    }
+}
 if (-not $SkipInstall) {
     & dotnet restore (Join-Path $taskRoot 'Poulet.slnx') --configfile (Join-Path $taskRoot 'NuGet.Config')
     if ($LASTEXITCODE -ne 0) { throw 'NuGet restore failed.' }
-    Push-Location (Join-Path $taskRoot 'web')
-    try { & npm.cmd ci; if ($LASTEXITCODE -ne 0) { throw 'npm install failed.' } }
-    finally { Pop-Location }
+    $taskLockHash = (Get-FileHash (Join-Path $taskWebRoot 'package-lock.json') -Algorithm SHA256).Hash
+    $taskInstallStamp = Join-Path $taskWebRoot 'node_modules/.poulet-lock.sha256'
+    $taskInstalledHash = if (Test-Path $taskInstallStamp) { (Get-Content $taskInstallStamp -Raw).Trim() } else { '' }
+    if ($Reinstall -or $taskInstalledHash -ne $taskLockHash -or -not (Test-Path (Join-Path $taskWebRoot 'node_modules/vite/bin/vite.js'))) {
+        Push-Location $taskWebRoot
+        try {
+            & npm.cmd ci
+            if ($LASTEXITCODE -ne 0) { throw 'npm install failed.' }
+            Set-Content -LiteralPath $taskInstallStamp -Value $taskLockHash -Encoding ascii -NoNewline
+        }
+        finally { Pop-Location }
+    }
+    else { Write-Host 'Frontend dependencies are up to date.' }
 }
-$taskApi = Start-Process dotnet -ArgumentList @('run', '--project', (Join-Path $taskRoot 'src/Poulet.Api'), '--no-restore') -WorkingDirectory $taskRoot -WindowStyle Hidden -PassThru
+$taskApiProject = '"' + (Join-Path $taskRoot 'src/Poulet.Api') + '"'
+$taskApi = Start-Process dotnet -ArgumentList @('run', '--project', $taskApiProject, '--no-restore') -WorkingDirectory $taskRoot -WindowStyle Hidden -PassThru
 $taskWeb = Start-Process npm.cmd -ArgumentList @('run', 'dev') -WorkingDirectory (Join-Path $taskRoot 'web') -WindowStyle Hidden -PassThru
 Write-Host 'App: http://127.0.0.1:5173 | Development login: admin / admin123'
 Write-Host "API process: $($taskApi.Id). Web process: $($taskWeb.Id). Press Ctrl+C to stop."

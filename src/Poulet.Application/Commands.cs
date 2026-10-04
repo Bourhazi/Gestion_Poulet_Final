@@ -12,8 +12,6 @@ public sealed record AddFeed(int ChamberId, DateOnly Date, decimal Quantity, dec
 public sealed record AddSale(DateOnly Date, string Type, int? ClientId, string? ClientName, int? ChamberId, string ChickenType, string Mode, decimal Quantity, decimal UnitPrice, int Pieces, decimal CrateCost, string? Notes) : IRequest<int>, ICommand;
 public sealed record AddMondayLine(int SaleId, string? ClientName, decimal Quantity, decimal UnitPrice, bool Paid, string Mode, List<string> Numbers, string? Notes) : IRequest<int>, ICommand;
 public sealed record TogglePayment(int SaleId, int LineId) : IRequest<bool>, ICommand;
-public sealed record AddProductPurchase(string Product, string Variety, int? SupplierId, DateOnly Date, decimal Quantity, decimal UnitPrice, int EggsPerTray, string? Notes) : IRequest<int>, ICommand;
-public sealed record SaveProductSale(int Id, string Product, string Variety, DateOnly Date, decimal Quantity, decimal UnitPrice, string Mode, int EggsPerTray, string? Notes) : IRequest<int>, ICommand;
 public sealed record DeleteEntity(string Kind, int Id, int? ParentId = null) : IRequest<bool>, ICommand;
 public sealed record Login(string Username, string Password) : IRequest<UserDto>;
 public sealed record AddUser(string Username, string Password, string Role, int? ClientId) : IRequest<int>, ICommand;
@@ -132,32 +130,6 @@ public sealed class SaleHandlers(IRepository db) : IRequestHandler<AddSale, int>
     {
         var e = await db.Find<Sale>(r.SaleId, ct) ?? throw new BusinessException("Sale not found."); var line = e.Lines.SingleOrDefault(l => l.Id == r.LineId) ?? throw new BusinessException("Line not found.");
         line.Paid = !line.Paid; await db.Save(ct); return line.Paid;
-    }
-}
-public sealed class ProductHandlers(IRepository db) : IRequestHandler<AddProductPurchase, int>, IRequestHandler<SaveProductSale, int>
-{
-    private static void Validate(string product, string variety, decimal quantity, decimal price, int eggsPerTray)
-    {
-        Rules.Product(product, variety); Rules.Positive(quantity, "Quantity"); Rules.NonNegative(price, "Price");
-        Rules.Require(eggsPerTray > 0 && eggsPerTray <= 100, "Eggs per tray must be between 1 and 100.");
-        if (product == "egg") Rules.Require(quantity == decimal.Truncate(quantity), "Egg quantities must be whole numbers.");
-    }
-    public async Task<int> Handle(AddProductPurchase r, CancellationToken ct)
-    {
-        Validate(r.Product, r.Variety, r.Quantity, r.UnitPrice, r.EggsPerTray);
-        if (r.SupplierId.HasValue) Rules.Require(await db.Find<Supplier>(r.SupplierId.Value, ct) != null, "Supplier not found.");
-        var e = new ProductPurchase { Product = r.Product, Variety = r.Variety, SupplierId = r.SupplierId, Date = r.Date, Quantity = r.Quantity, UnitPrice = r.UnitPrice, EggsPerTray = r.EggsPerTray, Notes = r.Notes }; db.Add(e); await db.Save(ct); return e.Id;
-    }
-    public async Task<int> Handle(SaveProductSale r, CancellationToken ct)
-    {
-        Validate(r.Product, r.Variety, r.Quantity, r.UnitPrice, r.EggsPerTray);
-        Rules.Require(r.Product == "olive" ? r.Mode == "kg" : r.Mode is "plateau" or "unite", "Invalid selling mode.");
-        var purchases = await db.List<ProductPurchase>(ct); var sales = (await db.List<ProductSale>(ct)).Where(s => s.Id != r.Id).ToList();
-        Rules.Require(Inventory.ProductStock(purchases, sales, r.Product, r.Variety) >= r.Quantity, "Insufficient stock.");
-        var e = r.Id == 0 ? new ProductSale() : await db.Find<ProductSale>(r.Id, ct) ?? throw new BusinessException("Sale not found.");
-        Rules.Require(r.Id == 0 || e.Product == r.Product, "Cannot change product.");
-        e.Product = r.Product; e.Variety = r.Variety; e.Date = r.Date; e.Quantity = r.Quantity; e.UnitPrice = r.UnitPrice; e.Mode = r.Mode; e.EggsPerTray = r.EggsPerTray; e.Notes = r.Notes; e.CostOfGoods = r.Quantity * Inventory.ProductCost(purchases, r.Product, r.Variety);
-        if (r.Id == 0) db.Add(e); await db.Save(ct); return e.Id;
     }
 }
 public sealed class UserHandlers(IRepository db, IPasswords passwords) : IRequestHandler<Login, UserDto>, IRequestHandler<AddUser, int>, IRequestHandler<ResetPassword, bool>

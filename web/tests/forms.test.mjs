@@ -13,9 +13,6 @@ const data = {
   purchases: [],
   feed: [],
   sales: [],
-  productPurchases: [],
-  productSales: [],
-  productStocks: [],
   users: [],
 };
 const dependencies = { data, lotId: 12, t: (key) => key };
@@ -35,10 +32,6 @@ test("every editable workflow has its endpoint and fields", () => {
     "monday-lines": "monday-lines",
     users: "users",
     passwords: "passwords",
-    "olive-purchase": "product-purchases",
-    "egg-purchase": "product-purchases",
-    "olive-sale": "product-sales",
-    "egg-sale": "product-sales",
   };
   for (const [kind, endpoint] of Object.entries(endpoints)) {
     const editor = createEditor(kind, undefined, dependencies);
@@ -101,46 +94,11 @@ test("Monday lots clear fields that belong to direct sales", () => {
   assert.equal(payload.pieces, 20);
 });
 
-test("egg tray quantities and prices convert to the API unit representation", () => {
-  const payload = serializeEditor(
-    form("egg-sale", {
-      quantity: "0.5",
-      unitPrice: "300",
-      eggsPerTray: "30",
-      mode: "plateau",
-    }),
+test("unsupported forms are rejected before a request can be created", () => {
+  assert.throws(
+    () => createEditor("unsupported", undefined, dependencies),
+    /Unknown form: unsupported/,
   );
-  assert.equal(payload.quantity, 15);
-  assert.equal(payload.unitPrice, 10);
-  const unit = serializeEditor(
-    form("egg-sale", {
-      quantity: "15",
-      unitPrice: "10",
-      eggsPerTray: "30",
-      mode: "unite",
-    }),
-  );
-  assert.equal(unit.quantity, 15);
-  assert.equal(unit.unitPrice, 10);
-});
-
-test("editing an egg sale round-trips the saved tray quantity and price", () => {
-  const sale = {
-    id: 9,
-    product: "egg",
-    variety: "egg",
-    date: "2026-10-02",
-    quantity: 15,
-    unitPrice: 10,
-    eggsPerTray: 30,
-    mode: "plateau",
-    costOfGoods: 100,
-  };
-  const editor = createEditor("egg-sale", sale, dependencies);
-  assert.equal(editor.values.quantity, "0.5");
-  assert.equal(editor.values.unitPrice, "300");
-  assert.equal(serializeEditor(editor).quantity, sale.quantity);
-  assert.equal(serializeEditor(editor).unitPrice, sale.unitPrice);
 });
 
 test("admin users have no linked client; wholesale choices exclude retail clients", () => {

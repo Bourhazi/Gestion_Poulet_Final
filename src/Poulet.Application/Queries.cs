@@ -10,14 +10,10 @@ public sealed class GetSnapshotHandler(IRepository db, ICurrentUser user) : IReq
     {
         var sales = await db.List<Sale>(ct);
         if (user.Role == "grossiste")
-            return new([], [], [], [], [], sales.Where(s => s.ClientId == user.ClientId).Select(SaleVisibility.CustomerView).ToList(), [], [], [], []);
+            return new([], [], [], [], [], sales.Where(s => s.ClientId == user.ClientId).Select(SaleVisibility.CustomerView).ToList(), []);
         var purchases = await db.List<Purchase>(ct);
         var chambers = (await db.List<Chamber>(ct)).Select(c => new ChamberStock(c.Id, c.Name, c.Capacity, c.IsSouk, Inventory.Stock(purchases, sales, c.Id, "normal"), Inventory.Stock(purchases, sales, c.Id, "bibi"))).ToList();
-        var pa = await db.List<ProductPurchase>(ct);
-        var ps = await db.List<ProductSale>(ct);
-        var stock = new[] { "noire", "verte", "mchermel", "hroure" }.Select(v => new ProductStock("olive", v, Inventory.ProductStock(pa, ps, "olive", v))).ToList();
-        stock.Add(new("egg", "egg", Inventory.ProductStock(pa, ps, "egg", "egg")));
-        return new(await db.List<Supplier>(ct), await db.List<Client>(ct), chambers, purchases, await db.List<Feed>(ct), sales, pa, ps, stock, (await db.List<User>(ct)).Select(u => new UserDto(u.Id, u.Username, u.Role, u.ClientId)).ToList());
+        return new(await db.List<Supplier>(ct), await db.List<Client>(ct), chambers, purchases, await db.List<Feed>(ct), sales, (await db.List<User>(ct)).Select(u => new UserDto(u.Id, u.Username, u.Role, u.ClientId)).ToList());
     }
 }
 public sealed record GetReport(DateOnly From, DateOnly To) : IRequest<object>;
@@ -27,20 +23,19 @@ public sealed class GetReportHandler(IRepository db) : IRequestHandler<GetReport
     {
         Rules.Require(request.From <= request.To, "Invalid date range.");
         var sales = (await db.List<Sale>(ct)).Where(s => s.Date >= request.From && s.Date <= request.To).ToList();
-        var products = (await db.List<ProductSale>(ct)).Where(s => s.Date >= request.From && s.Date <= request.To).ToList();
         var purchases = (await db.List<Purchase>(ct)).Where(p => p.Date >= request.From && p.Date <= request.To).ToList();
         var suppliers = await db.List<Supplier>(ct);
         var clients = await db.List<Client>(ct);
         var feed = (await db.List<Feed>(ct)).Where(f => f.Date >= request.From && f.Date <= request.To).Sum(f => f.Cost);
-        var revenue = sales.Sum(Inventory.Revenue) + products.Sum(p => p.Quantity * p.UnitPrice);
-        var cost = sales.Sum(Inventory.SoldCost) + products.Sum(p => p.CostOfGoods);
+        var revenue = sales.Sum(Inventory.Revenue);
+        var cost = sales.Sum(Inventory.SoldCost);
         var crates = sales.Sum(s => s.CrateCost);
         return new {
             request.From, request.To, ChickenKg = sales.Sum(s => s.Type == "lundi" ? s.Lines.Sum(l => l.Quantity) : s.Quantity),
             Revenue = revenue, CostOfGoods = cost, FeedCost = feed, CrateCost = crates, GrossProfit = revenue - cost, NetProfit = revenue - cost - feed - crates,
             PaidMonday = sales.SelectMany(s => s.Lines).Where(l => l.Paid).Sum(l => l.Quantity * l.UnitPrice),
             UnpaidMonday = sales.SelectMany(s => s.Lines).Where(l => !l.Paid).Sum(l => l.Quantity * l.UnitPrice),
-            ByDay = sales.Select(s => new { s.Date, Revenue = Inventory.Revenue(s) }).Concat(products.Select(s => new { s.Date, Revenue = s.Quantity * s.UnitPrice })).GroupBy(s => s.Date).OrderBy(g => g.Key).Select(g => new { Date = g.Key, Revenue = g.Sum(s => s.Revenue) }),
+            ByDay = sales.Select(s => new { s.Date, Revenue = Inventory.Revenue(s) }).GroupBy(s => s.Date).OrderBy(g => g.Key).Select(g => new { Date = g.Key, Revenue = g.Sum(s => s.Revenue) }),
             TopClients = sales.Where(s => s.Type == "grossiste").GroupBy(s => s.ClientId.HasValue ? clients.FirstOrDefault(c => c.Id == s.ClientId)?.Name ?? "Deleted client" : s.ClientName ?? "Anonymous").Select(g => new { Name = g.Key, Quantity = g.Sum(s => s.Quantity), Revenue = g.Sum(Inventory.Revenue) }).OrderByDescending(c => c.Revenue).Take(10),
             Suppliers = purchases.GroupBy(p => p.SupplierId).Select(g => new { Name = suppliers.FirstOrDefault(s => s.Id == g.Key)?.Name ?? "Unspecified", Count = g.Count(), Quantity = g.Sum(p => p.Quantity), Cost = g.Sum(p => (p.ActualWeight ?? p.Quantity) * p.UnitPrice) })
         };

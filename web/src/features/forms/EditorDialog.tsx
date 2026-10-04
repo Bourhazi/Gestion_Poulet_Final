@@ -42,14 +42,7 @@ export function EditorDialog() {
                 ),
             )
             .map((f) => {
-              const egg = editor.kind.startsWith("egg");
-              const unit = editor.values.mode === "unite";
-              const label =
-                egg && f.key === "quantity"
-                  ? t(unit ? "eggCount" : "trays")
-                  : egg && f.key === "unitPrice"
-                    ? t(unit ? "eggPrice" : "trayPrice")
-                    : t(f.key);
+              const label = t(f.key);
               const value = editor.values[f.key] || "";
               let opts = f.options;
               if (editor.kind === "sales" && f.key === "clientId")
@@ -68,9 +61,6 @@ export function EditorDialog() {
                           date:
                             value === "lundi" ? monday() : editor.values.date,
                         }
-                      : {}),
-                    ...(f.key === "mode" && egg
-                      ? { quantity: "", unitPrice: "0" }
                       : {}),
                   },
                 });
@@ -101,14 +91,7 @@ export function EditorDialog() {
                       type={f.type || "text"}
                       required={!f.optional}
                       value={value}
-                      min={
-                        egg &&
-                        editor.kind === "egg-sale" &&
-                        f.key === "quantity" &&
-                        !unit
-                          ? 0.001
-                          : f.min
-                      }
+                      min={f.min}
                       step={f.step}
                       pattern={f.key === "phone" ? "[0-9]{10}" : undefined}
                       minLength={f.type === "password" ? 8 : undefined}

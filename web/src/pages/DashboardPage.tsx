@@ -1,5 +1,4 @@
 import { usePage } from "../hooks/usePage";
-import { Table } from "../components/ui/Table";
 import { Cards } from "../components/ui/Cards";
 import { money, qty, revenue, today } from "../utils/format";
 
@@ -8,7 +7,7 @@ export function DashboardPage({
 }: {
   variant?: "dashboard" | "souk";
 }) {
-  const { t, data, empty, navigate, chamberDetail, salesTable } = usePage();
+  const { t, data, navigate, chamberDetail, salesTable } = usePage();
 
   const total = data.chambers.reduce((n, c) => n + c.total, 0);
   const todaySales = data.sales.filter((s) => s.date === today());
@@ -40,21 +39,6 @@ export function DashboardPage({
                 [
                   t("bibi") + " SOUK",
                   qty(data.chambers.find((c) => c.isSouk)?.bibi ?? 0) + " kg",
-                ],
-                [
-                  t("olives"),
-                  qty(
-                    data.productStocks
-                      .filter((s) => s.product === "olive")
-                      .reduce((n, s) => n + s.quantity, 0),
-                  ) + " kg",
-                ],
-                [
-                  t("eggs"),
-                  qty(
-                    data.productStocks.find((s) => s.product === "egg")
-                      ?.quantity ?? 0,
-                  ),
                 ],
               ]
         }
@@ -100,36 +84,6 @@ export function DashboardPage({
           .filter((s) => page !== "souk" || s.type === "lundi")
           .sort((a, b) => b.id - a.id)
           .slice(0, 8),
-      )}
-      {page === "souk" && (
-        <>
-          <h2>
-            {t("olives")} / {t("eggs")}
-          </h2>
-          <Table
-            heads={[t("type"), t("variety"), t("stock")]}
-            rows={data.productStocks.map((s) => [
-              t(s.product),
-              t(s.variety),
-              qty(s.quantity),
-            ])}
-            empty={empty}
-          />
-          <Table
-            heads={[t("date"), t("type"), t("quantity"), t("total")]}
-            rows={data.productSales
-              .slice()
-              .sort((a, b) => b.id - a.id)
-              .slice(0, 10)
-              .map((s) => [
-                s.date,
-                t(s.product),
-                qty(s.quantity),
-                money(s.quantity * s.unitPrice),
-              ])}
-            empty={empty}
-          />
-        </>
       )}
     </>
   );

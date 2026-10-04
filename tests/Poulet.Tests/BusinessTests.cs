@@ -65,23 +65,23 @@ public sealed class BusinessTests : IDisposable
         await Assert.ThrowsAsync<BusinessException>(()=>Send(new SaveChamber(c,"SOUK",29)));
         Assert.Equal(30,(await Send(new GetSnapshot())).Chambers.Single().Total);
     }
-    [Fact] public async Task Product_sales_edit_and_delete_preserve_stock()
+    [Fact] public async Task Report_includes_direct_and_monday_chicken_sales_and_cost_of_sold_quantity()
     {
-        var p=await Send(new AddProductPurchase("egg","egg",null,Monday,60,1,30,null));
-        var s=await Send(new SaveProductSale(0,"egg","egg",Monday,30,2,"plateau",30,null));
-        await Assert.ThrowsAsync<BusinessException>(()=>Send(new SaveProductSale(s,"egg","egg",Monday,61,2,"plateau",30,null)));
-        await Send(new SaveProductSale(s,"egg","egg",Monday,60,2,"unite",30,null));
-        await Assert.ThrowsAsync<BusinessException>(()=>Send(new DeleteEntity("product-purchase",p)));
-        Assert.Equal(0,(await Send(new GetSnapshot())).ProductStocks.Single(x=>x.Product=="egg").Quantity);
-    }
-    [Fact] public async Task Report_includes_monday_olives_eggs_and_cost_of_sold_quantity()
-    {
-        await Stock(); var id=await Send(new AddSale(Monday,"lundi",null,null,null,"normal","vivant",20,0,10,5,null));
+        var chamber=await Stock(); var id=await Send(new AddSale(Monday,"lundi",null,null,null,"normal","vivant",20,0,10,5,null));
         await Send(new AddMondayLine(id,"Client",10,20,true,"vivant",["01"],null));
-        await Send(new AddProductPurchase("olive","noire",null,Monday,10,2,30,null)); await Send(new SaveProductSale(0,"olive","noire",Monday,2,5,"kg",30,null));
-        await Send(new AddProductPurchase("egg","egg",null,Monday,30,1,30,null)); await Send(new SaveProductSale(0,"egg","egg",Monday,2,2,"unite",30,null));
+        await Send(Sale(chamber,10));
+        await Send(new AddFeed(chamber,Monday,1,3,null));
+        await Send(new AddSale(Monday.AddDays(1),"detail",null,null,chamber,"normal","vivant",5,30,0,0,null));
         var json=System.Text.Json.JsonSerializer.SerializeToElement(await Send(new GetReport(Monday,Monday)));
-        Assert.Equal(214,json.GetProperty("Revenue").GetDecimal()); Assert.Equal(106,json.GetProperty("CostOfGoods").GetDecimal()); Assert.Equal(103,json.GetProperty("NetProfit").GetDecimal());
+        Assert.Equal(400,json.GetProperty("Revenue").GetDecimal());
+        Assert.Equal(200,json.GetProperty("CostOfGoods").GetDecimal());
+        Assert.Equal(200,json.GetProperty("GrossProfit").GetDecimal());
+        Assert.Equal(192,json.GetProperty("NetProfit").GetDecimal());
+        Assert.Equal(20,json.GetProperty("ChickenKg").GetDecimal());
+        Assert.Equal(200,json.GetProperty("PaidMonday").GetDecimal());
+        Assert.Equal(0,json.GetProperty("UnpaidMonday").GetDecimal());
+        var day=Assert.Single(json.GetProperty("ByDay").EnumerateArray());
+        Assert.Equal(400,day.GetProperty("Revenue").GetDecimal());
     }
     [Fact] public async Task Real_weight_cost_is_prorated_across_chambers()
     {

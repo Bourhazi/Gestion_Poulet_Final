@@ -30,7 +30,7 @@ export function PageToolbar() {
         />
       )}{" "}
       {!lot &&
-        ["purchases", "feed", "sales", "olives", "eggs"].includes(page) && (
+        ["purchases", "feed", "sales"].includes(page) && (
           <input
             aria-label={t("date")}
             type="date"
@@ -61,20 +61,6 @@ export function PageToolbar() {
           <option value="">{t("all")}</option>
           <option value="true">{t("paid")}</option>
           <option value="false">{t("unpaid")}</option>
-        </select>
-      )}{" "}
-      {page === "olives" && (
-        <select
-          aria-label={t("variety")}
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          <option value="">{t("all")}</option>
-          {["noire", "verte", "mchermel", "hroure"].map((v) => (
-            <option key={v} value={v}>
-              {t(v)}
-            </option>
-          ))}
         </select>
       )}{" "}
       {page === "reports" && (

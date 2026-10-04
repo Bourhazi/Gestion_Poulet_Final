@@ -1,0 +1,31 @@
+Dans la fenetre Chicken purchases, dans la partie de Quantity allocation , si je choisit external warehouse , ET j'entre une quantité , il faut l'ajouter dans le champ Quantity dans la table de client choisi .
+
+
+LE CONCEPT DE FEED DOIT ETRE COMME ça : lorsque je recois les charges de poulet dans les chambres , on fait donner de feed au poulet (l3alf en arabe) , donc il faut ajouter ses charges dans le calcul , donc il faut adapté un plan qui fait controller ça , donc donner moi une solution , et en fin de compte il faut savoir si on a vendu , il faut voire combine on a gagner en prend ses charges en compte .
+
+
+
+si le lundi est finit et on n'a pas reusi a vendre tous les piece de poulet le lundi , on peut calculé le restant et le faire transfet a l'une des chambre ou chaque quantité dans chaque chambre , donc il faut prendre ce logique en consideration .
+
+
+
+
+Je veux aussi ajouter un logique , dans Vente du lundi , parfois on reçoit des commande , c'est a dire un seul personne qui veux 30 piece par exemple , on ne peut pas donner a chaque poulet un numero , il faut donner a tous la commande un seul numero .
+
+
+
+il faut voir aussi madbouh , parfois on prend plusieur piece en madbouh , donc on peut pas donner a chaque poulet numero .
+
+
+
+Il faut ajouter un trachink de tous les actions faites dans l'application ( historique ) .
+
+
+
+il faut ajouter JWT pour securite .
+
+
+Ameliorrer design .
+
+
+lkossoure .
