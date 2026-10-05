@@ -454,6 +454,14 @@ tr:hover td {
 .allocation-row button {
   padding: 4px;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: 1rem;
+}
 .login {
   min-height: 100vh;
   display: flex;
