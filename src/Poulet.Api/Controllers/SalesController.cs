@@ -10,6 +10,10 @@ namespace Poulet.Api.Controllers;
 [Authorize]
 public sealed class SalesController(ISender sender) : ControllerBase
 {
+    [HttpPost("/api/monday-transfers")]
+    [Authorize(Policy = "admin")]
+    public async Task<ActionResult<int>> TransferMondayStock([FromBody] TransferMondayStock command, CancellationToken ct)
+        => Ok(await sender.Send(command, ct));
     [HttpPost]
     [Authorize(Policy = "admin")]
     public async Task<ActionResult<int>> Add([FromBody] AddSale command, CancellationToken ct)

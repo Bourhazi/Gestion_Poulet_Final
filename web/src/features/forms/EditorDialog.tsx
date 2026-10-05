@@ -44,6 +44,39 @@ export function EditorDialog() {
             .map((f) => {
               const label = t(f.key);
               const value = editor.values[f.key] || "";
+              if (editor.kind === "monday-lines" && f.key === "numbers") {
+                const pieceCount = Number(editor.values.pieceCount || 0);
+                const requiredCount =
+                  pieceCount >= 5 ? 1 : Math.max(1, pieceCount);
+                const numbers = value.split(",").map((number) => number.trim());
+                const updateNumber = (index: number, number: string) => {
+                  const next = Array.from(
+                    { length: requiredCount },
+                    (_, i) => (i === index ? number : numbers[i] || ""),
+                  );
+                  setEditor({
+                    ...editor,
+                    values: { ...editor.values, numbers: next.join(",") },
+                  });
+                };
+                return (
+                  <fieldset key={f.key}>
+                    <legend>{label}</legend>
+                    {Array.from({ length: requiredCount }, (_, index) => (
+                      <label key={index}>
+                        {pieceCount >= 5
+                          ? t("orderNumber")
+                          : `${t("chickenNumber")} ${index + 1}`}
+                        <input
+                          required
+                          value={numbers[index] || ""}
+                          onChange={(e) => updateNumber(index, e.target.value)}
+                        />
+                      </label>
+                    ))}
+                  </fieldset>
+                );
+              }
               let opts = f.options;
               if (editor.kind === "sales" && f.key === "clientId")
                 opts = options(

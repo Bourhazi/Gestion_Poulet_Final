@@ -134,6 +134,7 @@ export function createEditor(
       fields = [
         { key: "clientName", optional: true },
         numeric("quantity", false, 0.001),
+        numeric("pieceCount", false, 1),
         numeric("unitPrice"),
         { key: "numbers", type: "textarea" },
         choice("mode", ["vivant", "madbouh"]),

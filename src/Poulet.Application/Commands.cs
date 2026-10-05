@@ -10,7 +10,9 @@ public sealed record AllocationInput(int? ChamberId, int? ClientId, decimal Quan
 public sealed record SavePurchase(int Id, int? SupplierId, DateOnly Date, decimal Quantity, decimal UnitPrice, string ChickenType, decimal? DepartureWeight, decimal? ActualWeight, string? Notes, List<AllocationInput> Allocations) : IRequest<int>, ICommand;
 public sealed record AddFeed(int ChamberId, DateOnly Date, decimal Quantity, string Unit, decimal UnitPrice, string? FeedType, string? Notes) : IRequest<int>, ICommand;
 public sealed record AddSale(DateOnly Date, string Type, int? ClientId, string? ClientName, int? ChamberId, string ChickenType, string Mode, decimal Quantity, decimal UnitPrice, int Pieces, decimal CrateCost, string? Notes) : IRequest<int>, ICommand;
-public sealed record AddMondayLine(int SaleId, string? ClientName, decimal Quantity, decimal UnitPrice, bool Paid, string Mode, List<string> Numbers, string? Notes) : IRequest<int>, ICommand;
+public sealed record AddMondayLine(int SaleId, string? ClientName, decimal Quantity, decimal UnitPrice, bool Paid, int PieceCount, string Mode, List<string> Numbers, string? Notes) : IRequest<int>, ICommand;
+public sealed record MondayTransferInput(int ChamberId, decimal Quantity);
+public sealed record TransferMondayStock(int SaleId, DateOnly Date, string? Notes, List<MondayTransferInput> Transfers) : IRequest<int>, ICommand;
 public sealed record TogglePayment(int SaleId, int LineId) : IRequest<bool>, ICommand;
 public sealed record DeleteEntity(string Kind, int Id, int? ParentId = null) : IRequest<bool>, ICommand;
 public sealed record Login(string Username, string Password) : IRequest<UserDto>;
@@ -84,7 +86,7 @@ public sealed class PurchaseHandler(IRepository db) : IRequestHandler<SavePurcha
         if (r.Id == 0) db.Add(e); await db.Save(ct); return e.Id;
     }
 }
-public sealed class SaleHandlers(IRepository db) : IRequestHandler<AddSale, int>, IRequestHandler<AddMondayLine, int>, IRequestHandler<TogglePayment, bool>
+public sealed class SaleHandlers(IRepository db, ICurrentUser user) : IRequestHandler<AddSale, int>, IRequestHandler<AddMondayLine, int>, IRequestHandler<TogglePayment, bool>, IRequestHandler<TransferMondayStock, int>
 {
     public async Task<int> Handle(AddSale r, CancellationToken ct)
     {
@@ -118,20 +120,40 @@ public sealed class SaleHandlers(IRepository db) : IRequestHandler<AddSale, int>
     public async Task<int> Handle(AddMondayLine r, CancellationToken ct)
     {
         var e = await db.Find<Sale>(r.SaleId, ct) ?? throw new BusinessException("Sale not found.");
-        Rules.Require(e.Type == "lundi", "This is not a Monday lot."); Rules.Positive(r.Quantity, "Quantity"); Rules.NonNegative(r.UnitPrice, "Price"); Rules.Require(r.Mode is "vivant" or "madbouh", "Invalid mode.");
-        Rules.Require(r.Numbers is { Count: > 0 }, "Enter a number for every piece.");
-        Rules.Require(r.Numbers.All(n => !string.IsNullOrWhiteSpace(n) && n.Length <= 80), "Enter a number for every piece.");
+        Rules.Require(e.Type == "lundi", "This is not a Monday lot."); Rules.Positive(r.Quantity, "Quantity"); Rules.NonNegative(r.UnitPrice, "Price"); Rules.Require(r.PieceCount > 0, "Number of pieces must be positive."); Rules.Require(r.Mode is "vivant" or "madbouh", "Invalid mode.");
+        Rules.Require(r.Numbers is { Count: > 0 } && r.Numbers.All(n => !string.IsNullOrWhiteSpace(n) && n.Length <= 80), "Enter chicken numbers.");
         var numbers = r.Numbers.Select(n => n.Trim()).ToList();
+        Rules.Require(r.PieceCount >= 5 ? numbers.Count == 1 : numbers.Count == r.PieceCount, "Enter one order number for 5+ pieces, or one chicken number per piece.");
         Rules.Require(numbers.Distinct(StringComparer.OrdinalIgnoreCase).Count() == numbers.Count && !e.Lines.SelectMany(l => l.Pieces).Any(p => numbers.Contains(p.Number, StringComparer.OrdinalIgnoreCase)), "Chicken numbers must be unique within this lot.");
-        Rules.Require(e.Lines.Sum(l => l.Pieces.Count) + numbers.Count <= e.Pieces, "Not enough pieces remaining.");
+        Rules.Require(e.Lines.Sum(l => l.PieceCount) + r.PieceCount <= e.Pieces, "Not enough pieces remaining.");
         Rules.Require(e.Lines.Sum(l => l.Quantity) + r.Quantity <= e.Quantity, "Not enough kilograms remaining.");
-        var line = new MondayLine { ClientName = r.ClientName, Quantity = r.Quantity, UnitPrice = r.UnitPrice, Paid = r.Paid, Mode = r.Mode, Notes = r.Notes, Pieces = numbers.Select(n => new ChickenPiece { Number = n }).ToList() };
+        var line = new MondayLine { ClientName = r.ClientName, Quantity = r.Quantity, UnitPrice = r.UnitPrice, PieceCount = r.PieceCount, Paid = r.Paid, Mode = r.Mode, Notes = r.Notes, Pieces = numbers.Select(n => new ChickenPiece { Number = n }).ToList() };
         e.Lines.Add(line); await db.Save(ct); return line.Id;
     }
     public async Task<bool> Handle(TogglePayment r, CancellationToken ct)
     {
         var e = await db.Find<Sale>(r.SaleId, ct) ?? throw new BusinessException("Sale not found."); var line = e.Lines.SingleOrDefault(l => l.Id == r.LineId) ?? throw new BusinessException("Line not found.");
         line.Paid = !line.Paid; await db.Save(ct); return line.Paid;
+    }
+    public async Task<int> Handle(TransferMondayStock r, CancellationToken ct)
+    {
+        var sale = await db.Find<Sale>(r.SaleId, ct) ?? throw new BusinessException("Monday lot not found.");
+        Rules.Require(sale.Type == "lundi", "This is not a Monday lot.");
+        Rules.Require(r.Transfers is { Count: > 0 }, "Choose at least one destination chamber.");
+        foreach (var transfer in r.Transfers) { Rules.Positive(transfer.Quantity, "Transfer quantity"); Rules.Require(await db.Find<Chamber>(transfer.ChamberId, ct) != null, "Chamber not found."); }
+        var sold = sale.Lines.Sum(l => l.Quantity);
+        var alreadyTransferred = sale.Transfers.Sum(t => t.Quantity);
+        var remaining = sale.Quantity - sold - alreadyTransferred;
+        Rules.Require(remaining > 0, "No remaining Monday stock to transfer.");
+        Rules.Require(r.Transfers.Sum(t => t.Quantity) == remaining, "Transfer the entire remaining Monday stock.");
+        foreach (var chamber in await db.List<Chamber>(ct))
+        {
+            var added = r.Transfers.Where(t => t.ChamberId == chamber.Id).Sum(t => t.Quantity);
+            Rules.Require(chamber.Capacity == 0 || Inventory.Stock(await db.List<Purchase>(ct), await db.List<Sale>(ct), chamber.Id) + added <= chamber.Capacity, $"Capacity exceeded in {chamber.Name}.");
+        }
+        var unitCost = sale.Quantity == 0 ? 0 : sale.CostOfGoods / sale.Quantity;
+        sale.Transfers.AddRange(r.Transfers.Select(t => new MondayTransfer { Date = r.Date, ChamberId = t.ChamberId, Quantity = t.Quantity, ChickenType = sale.ChickenType, UnitCost = unitCost, UserId = user.Id, Notes = r.Notes }));
+        await db.Save(ct); return sale.Transfers.Count;
     }
 }
 public sealed class UserHandlers(IRepository db, IPasswords passwords) : IRequestHandler<Login, UserDto>, IRequestHandler<AddUser, int>, IRequestHandler<ResetPassword, bool>

@@ -29,3 +29,13 @@ Ameliorrer design .
 
 
 lkossoure .
+
+
+
+
+
+
+
+
+si on fait une Chicken sales a un client , çe veut dire pas qu'il est payé par le client automatiquement, il faut ajouter une status de payement qu'on peut le changer de payé et non payé .
+

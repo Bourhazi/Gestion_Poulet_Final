@@ -5,10 +5,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     protected override void OnModelCreating(ModelBuilder b)
     {
-        b.Entity<Supplier>(); b.Entity<Client>(); b.Entity<Chamber>(); b.Entity<Purchase>(); b.Entity<Allocation>(); b.Entity<Sale>(); b.Entity<SaleAllocation>(); b.Entity<MondayLine>(); b.Entity<ChickenPiece>(); b.Entity<Feed>(); b.Entity<User>();
+        b.Entity<Supplier>(); b.Entity<Client>(); b.Entity<Chamber>(); b.Entity<Purchase>(); b.Entity<Allocation>(); b.Entity<Sale>(); b.Entity<SaleAllocation>(); b.Entity<MondayLine>(); b.Entity<MondayTransfer>(); b.Entity<ChickenPiece>(); b.Entity<Feed>(); b.Entity<User>();
         b.Entity<Purchase>().HasMany(p => p.Allocations).WithOne().HasForeignKey(a => a.PurchaseId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<Sale>().HasMany(s => s.Allocations).WithOne().HasForeignKey(a => a.SaleId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<Sale>().HasMany(s => s.Lines).WithOne().HasForeignKey(l => l.SaleId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<Sale>().HasMany(s => s.Transfers).WithOne().HasForeignKey(t => t.SaleId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MondayLine>().HasMany(l => l.Pieces).WithOne().HasForeignKey(p => p.MondayLineId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<Purchase>().HasOne<Supplier>().WithMany().HasForeignKey(p => p.SupplierId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Allocation>().HasOne<Chamber>().WithMany().HasForeignKey(a => a.ChamberId).OnDelete(DeleteBehavior.Restrict);
@@ -17,6 +18,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         b.Entity<Sale>().HasOne<Client>().WithMany().HasForeignKey(s => s.ClientId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<User>().HasOne<Client>().WithMany().HasForeignKey(u => u.ClientId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Feed>().HasOne<Chamber>().WithMany().HasForeignKey(f => f.ChamberId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<MondayTransfer>().HasOne<Chamber>().WithMany().HasForeignKey(t => t.ChamberId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<MondayTransfer>().HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<User>().HasIndex(u => u.Username).IsUnique(); b.Entity<Chamber>().HasIndex(c => c.Name).IsUnique(); b.Entity<Sale>().HasIndex(s => s.Date); b.Entity<Purchase>().HasIndex(p => p.Date);
     }
 }

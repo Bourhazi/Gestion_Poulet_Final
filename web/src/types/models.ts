@@ -53,11 +53,13 @@ export type MondayLine = {
   clientName?: string;
   quantity: number;
   unitPrice: number;
+  pieceCount: number;
   paid: boolean;
   mode: string;
   notes?: string;
   pieces: { id: number; number: string }[];
 };
+export type MondayTransfer = { id: number; date: string; chamberId: number; quantity: number; userId: number; notes?: string };
 export type Sale = {
   id: number;
   date: string;
@@ -74,6 +76,7 @@ export type Sale = {
   notes?: string;
   allocations: Allocation[];
   lines: MondayLine[];
+  transfers: MondayTransfer[];
 };
 export type Snapshot = {
   suppliers: Person[];

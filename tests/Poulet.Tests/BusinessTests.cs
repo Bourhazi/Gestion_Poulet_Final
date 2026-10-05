@@ -51,9 +51,9 @@ public sealed class BusinessTests : IDisposable
         await Stock(100,chamberId:a);
         var id=await Send(new AddSale(Monday,"lundi",null,null,null,"normal","vivant",50,0,10,5,null));
         var lot=(await Send(new GetSnapshot())).Sales.Single(); Assert.Equal(30,lot.Allocations.Single(x=>x.ChamberId==c).Quantity); Assert.Equal(20,lot.Allocations.Single(x=>x.ChamberId==a).Quantity);
-        var line=await Send(new AddMondayLine(id,"Client",10,20,false,"vivant",["001","002"],null));
-        await Assert.ThrowsAsync<BusinessException>(()=>Send(new AddMondayLine(id,"Client",41,20,false,"vivant",["003"],null)));
-        await Assert.ThrowsAsync<BusinessException>(()=>Send(new AddMondayLine(id,"Client",1,20,false,"vivant",["001"],null)));
+        var line=await Send(new AddMondayLine(id,"Client",10,20,false,2,"vivant",["001","002"],null));
+        await Assert.ThrowsAsync<BusinessException>(()=>Send(new AddMondayLine(id,"Client",41,20,false,1,"vivant",["003"],null)));
+        await Assert.ThrowsAsync<BusinessException>(()=>Send(new AddMondayLine(id,"Client",1,20,false,1,"vivant",["001"],null)));
         Assert.True(await Send(new TogglePayment(id,line)));
         await Assert.ThrowsAsync<BusinessException>(()=>Send(new AddSale(Monday.AddDays(1),"lundi",null,null,null,"normal","vivant",1,0,1,0,null)));
     }
@@ -68,7 +68,7 @@ public sealed class BusinessTests : IDisposable
     [Fact] public async Task Report_includes_direct_and_monday_chicken_sales_and_cost_of_sold_quantity()
     {
         var chamber=await Stock(); var id=await Send(new AddSale(Monday,"lundi",null,null,null,"normal","vivant",20,0,10,5,null));
-        await Send(new AddMondayLine(id,"Client",10,20,true,"vivant",["01"],null));
+        await Send(new AddMondayLine(id,"Client",10,20,true,1,"vivant",["01"],null));
         await Send(Sale(chamber,10));
         await Send(new AddFeed(chamber,Monday,1,"kg",3,null,null));
         await Send(new AddSale(Monday.AddDays(1),"detail",null,null,chamber,"normal","vivant",5,30,0,0,null));

@@ -10,6 +10,7 @@ public sealed class Purchase : Entity
     public DateOnly Date { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public int PieceCount { get; set; }
     public string ChickenType { get; set; } = "normal";
     public decimal? DepartureWeight { get; set; }
     public decimal? ActualWeight { get; set; }
@@ -44,6 +45,7 @@ public sealed class Sale : Entity
     public string? Notes { get; set; }
     public List<SaleAllocation> Allocations { get; set; } = [];
     public List<MondayLine> Lines { get; set; } = [];
+    public List<MondayTransfer> Transfers { get; set; } = [];
 }
 public sealed class SaleAllocation : Entity { public int SaleId { get; set; } public int ChamberId { get; set; } public decimal Quantity { get; set; } }
 public sealed class MondayLine : Entity
@@ -52,11 +54,13 @@ public sealed class MondayLine : Entity
     public string? ClientName { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+    public int PieceCount { get; set; }
     public bool Paid { get; set; }
     public string Mode { get; set; } = "vivant";
     public string? Notes { get; set; }
     public List<ChickenPiece> Pieces { get; set; } = [];
 }
+public sealed class MondayTransfer : Entity { public int SaleId { get; set; } public DateOnly Date { get; set; } public int ChamberId { get; set; } public decimal Quantity { get; set; } public string ChickenType { get; set; } = "normal"; public decimal UnitCost { get; set; } public int UserId { get; set; } public string? Notes { get; set; } }
 public sealed class ChickenPiece : Entity { public int MondayLineId { get; set; } public string Number { get; set; } = ""; }
 public sealed class User : Entity { public string Username { get; set; } = ""; public string PasswordHash { get; set; } = ""; public string Role { get; set; } = "grossiste"; public int? ClientId { get; set; } }
 public sealed class BusinessException(string message) : Exception(message);

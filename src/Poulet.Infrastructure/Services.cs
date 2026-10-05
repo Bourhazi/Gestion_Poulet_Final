@@ -10,7 +10,7 @@ public sealed class Repository(AppDbContext db) : IRepository
     private IQueryable<T> Query<T>() where T : Entity
     {
         if (typeof(T) == typeof(Purchase)) return (IQueryable<T>)db.Set<Purchase>().Include(p => p.Allocations);
-        if (typeof(T) == typeof(Sale)) return (IQueryable<T>)db.Set<Sale>().Include(s => s.Allocations).Include(s => s.Lines).ThenInclude(l => l.Pieces).AsSplitQuery();
+        if (typeof(T) == typeof(Sale)) return (IQueryable<T>)db.Set<Sale>().Include(s => s.Allocations).Include(s => s.Lines).ThenInclude(l => l.Pieces).Include(s => s.Transfers).AsSplitQuery();
         return db.Set<T>();
     }
     public Task<List<T>> List<T>(CancellationToken ct) where T : Entity => Query<T>().ToListAsync(ct);
@@ -73,6 +73,21 @@ public static class DependencyInjection
                 await using var command = connection.CreateCommand();
                 command.CommandText = $"ALTER TABLE Feed ADD COLUMN {name} {definition}";
                 await command.ExecuteNonQueryAsync();
+            }
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS MondayTransfer (Id INTEGER NOT NULL CONSTRAINT PK_MondayTransfer PRIMARY KEY AUTOINCREMENT, SaleId INTEGER NOT NULL, Date TEXT NOT NULL, ChamberId INTEGER NOT NULL, Quantity TEXT NOT NULL, ChickenType TEXT NOT NULL, UnitCost TEXT NOT NULL, UserId INTEGER NOT NULL, Notes TEXT NULL, CONSTRAINT FK_MondayTransfer_Sale_SaleId FOREIGN KEY (SaleId) REFERENCES Sale (Id) ON DELETE CASCADE, CONSTRAINT FK_MondayTransfer_Chamber_ChamberId FOREIGN KEY (ChamberId) REFERENCES Chamber (Id) ON DELETE RESTRICT, CONSTRAINT FK_MondayTransfer_User_UserId FOREIGN KEY (UserId) REFERENCES User (Id) ON DELETE RESTRICT)";
+                await command.ExecuteNonQueryAsync();
+            }
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "ALTER TABLE MondayLine ADD COLUMN PieceCount INTEGER NOT NULL DEFAULT 0";
+                try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
+            }
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "ALTER TABLE Purchase ADD COLUMN PieceCount INTEGER NOT NULL DEFAULT 0";
+                try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
             }
         }
         finally { if (close) await connection.CloseAsync(); }

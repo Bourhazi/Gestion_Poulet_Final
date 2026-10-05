@@ -76,10 +76,11 @@ export function ChamberDetails({
       />
       <h3>{t("sales")}</h3>
       <Table
-        heads={[t("date"), t("type"), t("quantity")]}
+        heads={[t("date"), t("type"), t("clientId"), t("quantity")]}
         rows={sales.map((s) => [
           s.date,
           t(s.type),
+          s.clientName || name(data.clients, s.clientId),
           qty(
             s.allocations
               .filter((a) => a.chamberId === c.id)

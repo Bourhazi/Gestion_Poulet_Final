@@ -19,9 +19,15 @@ export function MondaySalePage() {
     matches,
     lot,
     actions,
+    setEditor,
   } = usePage();
   if (!lot) return null;
   const kg = lot.lines.reduce((n, l) => n + l.quantity, 0);
+  const transferred = (lot.transfers ?? []).reduce(
+    (n, transfer) => n + transfer.quantity,
+    0,
+  );
+  const remaining = lot.quantity - kg - transferred;
   const pieces = lot.lines.reduce((n, l) => n + l.pieces.length, 0);
   const paid = lot.lines
     .filter((l) => l.paid)
@@ -46,7 +52,7 @@ export function MondaySalePage() {
       </div>
       <Cards
         items={[
-          [t("remaining") + " · kg", qty(lot.quantity - kg)],
+          [t("remaining") + " · kg", qty(remaining)],
           [t("remaining") + " · " + t("pieces"), String(lot.pieces - pieces)],
           [t("revenue"), money(revenue(lot))],
           [
@@ -70,6 +76,11 @@ export function MondaySalePage() {
           )
           .join(" · ")}
       </p>
+      {remaining > 0 && (
+        <button onClick={() => setEditor({ title: t("transfer"), endpoint: "monday-transfers", kind: "monday-transfers", values: { saleId: String(lot.id), date: lot.date, quantity: String(remaining), notes: "" }, fields: [{ key: "notes", type: "textarea", optional: true }], allocations: [{ chamberId: data.chambers[0]?.id, quantity: remaining }] })}>
+          {t("transferRemaining")}
+        </button>
+      )}
       <Table
         heads={[
           t("clientName"),

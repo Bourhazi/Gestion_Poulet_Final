@@ -12,6 +12,7 @@ export function serializeEditor(editor: Editor): Record<string, unknown> {
     "quantity",
     "unitPrice",
     "pieces",
+    "pieceCount",
     "crateCost",
     "departureWeight",
     "actualWeight",
@@ -24,6 +25,10 @@ export function serializeEditor(editor: Editor): Record<string, unknown> {
       clientId: a.clientId ?? null,
       quantity: a.quantity,
     }));
+  if (editor.kind === "monday-transfers") {
+    body.saleId = Number(v.saleId);
+    body.transfers = editor.allocations?.map((a) => ({ chamberId: a.chamberId, quantity: a.quantity })) ?? [];
+  }
   if (editor.kind === "monday-lines") {
     body.numbers = (v.numbers || "")
       .split(",")

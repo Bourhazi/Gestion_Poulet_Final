@@ -60,6 +60,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     distributions: "Répartition du tonnage",
     external: "Local externe",
     numbers: "Numéros de poulet (séparés par virgules)",
+    chickenNumber: "Numéro du poulet",
+    orderNumber: "Numéro de commande",
     remaining: "Restant",
     from: "Du",
     to: "Au",
@@ -93,6 +95,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     kg: "kg",
     stockMovements: "Historique des mouvements de stock",
     externalAllocation: "Allocation vers local externe",
+    transfer: "Transfert",
+    transferRemaining: "Transférer le stock restant",
   },
   en: {
     dashboard: "Dashboard",
@@ -154,6 +158,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     distributions: "Quantity allocation",
     external: "External warehouse",
     numbers: "Chicken numbers (comma separated)",
+    chickenNumber: "Chicken number",
+    orderNumber: "Order number",
     remaining: "Remaining",
     from: "From",
     to: "To",
@@ -187,6 +193,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     kg: "kg",
     stockMovements: "Stock movement history",
     externalAllocation: "External warehouse allocation",
+    transfer: "Transfer",
+    transferRemaining: "Transfer remaining stock",
   },
   ar: {
     dashboard: "لوحة التحكم",
@@ -248,6 +256,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     distributions: "توزيع الكمية",
     external: "مستودع خارجي",
     numbers: "أرقام الدجاج (مفصولة بفواصل)",
+    chickenNumber: "رقم الدجاجة",
+    orderNumber: "رقم الطلب",
     remaining: "المتبقي",
     from: "من",
     to: "إلى",
@@ -281,6 +291,8 @@ const dictionaries: Record<Language, Record<string, string>> = {
     kg: "كغ",
     stockMovements: "سجل حركات المخزون",
     externalAllocation: "تخصيص إلى مستودع خارجي",
+    transfer: "تحويل",
+    transferRemaining: "تحويل المخزون المتبقي",
   },
 };
 export const translator = (lang: Language) => (key: string) =>
