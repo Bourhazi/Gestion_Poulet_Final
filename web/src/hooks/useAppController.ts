@@ -87,6 +87,7 @@ export function useAppController() {
         "souk",
         "reports",
         "users",
+        "history",
       ]
     : ["sales"];
   const lot = data?.sales.find((s) => s.id === lotId);

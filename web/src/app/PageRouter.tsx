@@ -10,6 +10,7 @@ import { SoukPage } from "../pages/SoukPage";
 import { ReportsPage } from "../pages/ReportsPage";
 import { UsersPage } from "../pages/UsersPage";
 import { MondaySalePage } from "../pages/MondaySalePage";
+import { HistoryPage } from "../pages/HistoryPage";
 const pages = {
   dashboard: DashboardPage,
   suppliers: SuppliersPage,
@@ -21,6 +22,7 @@ const pages = {
   souk: SoukPage,
   reports: ReportsPage,
   users: UsersPage,
+  history: HistoryPage,
 };
 export function PageRouter() {
   const { page, lot, admin } = useWorkspace();

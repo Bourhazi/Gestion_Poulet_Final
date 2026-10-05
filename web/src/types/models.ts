@@ -73,6 +73,7 @@ export type Sale = {
   pieces: number;
   crateCost: number;
   costOfGoods: number;
+  paymentStatus: "PAID" | "UNPAID";
   notes?: string;
   allocations: Allocation[];
   lines: MondayLine[];
@@ -90,6 +91,8 @@ export type Snapshot = {
 export type Report = {
   chickenKg: number;
   revenue: number;
+  paidAmount: number;
+  unpaidAmount: number;
   costOfGoods: number;
   feedCost: number;
   feedPeriodCost: number;
@@ -105,3 +108,4 @@ export type Report = {
   topClients: { name: string; quantity: number; revenue: number }[];
   suppliers: { name: string; count: number; quantity: number; cost: number }[];
 };
+export type AuditLog = { id: number; date: string; userId?: number; action: string; module: string; entityType: string; entityId?: number; oldValues?: string; newValues?: string; description: string; ipAddress?: string };

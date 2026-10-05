@@ -37,4 +37,8 @@ public sealed class SalesController(ISender sender) : ControllerBase
     [Authorize(Policy = "admin")]
     public async Task<ActionResult<bool>> TogglePayment([FromBody] TogglePayment command, CancellationToken ct)
         => Ok(await sender.Send(command, ct));
+    [HttpPost("/api/sales/payment-status")]
+    [Authorize(Policy = "admin")]
+    public async Task<ActionResult> SetPaymentStatus([FromBody] SetSalePaymentStatus command, CancellationToken ct)
+        => Ok(new { paymentStatus = await sender.Send(command, ct) });
 }

@@ -22,6 +22,8 @@ export function ReportsPage() {
       <Cards
         items={[
           [t("revenue"), money(report.revenue)],
+          [t("paidAmount"), money(report.paidAmount)],
+          [t("unpaidAmount"), money(report.unpaidAmount)],
           [t("purchasesCost"), money(report.costOfGoods)],
           [t("feedSoldCost"), money(values.feedSoldCost)],
           [t("feedPeriodCost"), money(values.feedPeriodCost)],

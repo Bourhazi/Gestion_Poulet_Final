@@ -5,7 +5,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     protected override void OnModelCreating(ModelBuilder b)
     {
-        b.Entity<Supplier>(); b.Entity<Client>(); b.Entity<Chamber>(); b.Entity<Purchase>(); b.Entity<Allocation>(); b.Entity<Sale>(); b.Entity<SaleAllocation>(); b.Entity<MondayLine>(); b.Entity<MondayTransfer>(); b.Entity<ChickenPiece>(); b.Entity<Feed>(); b.Entity<User>();
+        b.Entity<Supplier>(); b.Entity<Client>(); b.Entity<Chamber>(); b.Entity<Purchase>(); b.Entity<Allocation>(); b.Entity<Sale>(); b.Entity<SaleAllocation>(); b.Entity<MondayLine>(); b.Entity<MondayTransfer>(); b.Entity<ChickenPiece>(); b.Entity<Feed>(); b.Entity<User>(); b.Entity<AuditLog>();
         b.Entity<Purchase>().HasMany(p => p.Allocations).WithOne().HasForeignKey(a => a.PurchaseId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<Sale>().HasMany(s => s.Allocations).WithOne().HasForeignKey(a => a.SaleId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<Sale>().HasMany(s => s.Lines).WithOne().HasForeignKey(l => l.SaleId).OnDelete(DeleteBehavior.Cascade);

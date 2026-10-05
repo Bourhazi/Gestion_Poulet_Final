@@ -17,6 +17,7 @@ export function SalesTable({ list }: { list: Sale[] }) {
     admin,
     empty,
     receipt,
+    mutate,
   } = useWorkspace();
   const actions = useRecordActions();
   return (
@@ -28,6 +29,7 @@ export function SalesTable({ list }: { list: Sale[] }) {
         t("chickenType"),
         t("quantity"),
         t("revenue"),
+        t("paymentStatus"),
         "",
       ]}
       empty={empty}
@@ -40,6 +42,7 @@ export function SalesTable({ list }: { list: Sale[] }) {
         t(s.chickenType) + " · " + t(s.mode),
         qty(s.quantity),
         money(revenue(s)),
+        s.type === "lundi" ? "—" : <button className={"badge " + (s.paymentStatus === "PAID" ? "green" : "amber")} onClick={() => mutate("/sales/payment-status", { saleId: s.id, paymentStatus: s.paymentStatus === "PAID" ? "UNPAID" : "PAID" })}>{t(s.paymentStatus === "PAID" ? "paid" : "unpaid")}</button>,
         actions(
           "sale",
           s.id,

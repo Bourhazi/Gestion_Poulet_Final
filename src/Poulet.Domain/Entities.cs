@@ -42,6 +42,7 @@ public sealed class Sale : Entity
     public int Pieces { get; set; }
     public decimal CrateCost { get; set; }
     public decimal CostOfGoods { get; set; }
+    public string PaymentStatus { get; set; } = "UNPAID";
     public string? Notes { get; set; }
     public List<SaleAllocation> Allocations { get; set; } = [];
     public List<MondayLine> Lines { get; set; } = [];
@@ -63,6 +64,19 @@ public sealed class MondayLine : Entity
 public sealed class MondayTransfer : Entity { public int SaleId { get; set; } public DateOnly Date { get; set; } public int ChamberId { get; set; } public decimal Quantity { get; set; } public string ChickenType { get; set; } = "normal"; public decimal UnitCost { get; set; } public int UserId { get; set; } public string? Notes { get; set; } }
 public sealed class ChickenPiece : Entity { public int MondayLineId { get; set; } public string Number { get; set; } = ""; }
 public sealed class User : Entity { public string Username { get; set; } = ""; public string PasswordHash { get; set; } = ""; public string Role { get; set; } = "grossiste"; public int? ClientId { get; set; } }
+public sealed class AuditLog : Entity
+{
+    public DateTimeOffset Date { get; set; }
+    public int? UserId { get; set; }
+    public string Action { get; set; } = "";
+    public string Module { get; set; } = "";
+    public string EntityType { get; set; } = "";
+    public int? EntityId { get; set; }
+    public string? OldValues { get; set; }
+    public string? NewValues { get; set; }
+    public string Description { get; set; } = "";
+    public string? IpAddress { get; set; }
+}
 public sealed class BusinessException(string message) : Exception(message);
 
 public static class Rules

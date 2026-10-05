@@ -81,7 +81,17 @@ public static class DependencyInjection
             }
             await using (var command = connection.CreateCommand())
             {
+                command.CommandText = "CREATE TABLE IF NOT EXISTS AuditLog (Id INTEGER NOT NULL CONSTRAINT PK_AuditLog PRIMARY KEY AUTOINCREMENT, Date TEXT NOT NULL, UserId INTEGER NULL, Action TEXT NOT NULL, Module TEXT NOT NULL, EntityType TEXT NOT NULL, EntityId INTEGER NULL, OldValues TEXT NULL, NewValues TEXT NULL, Description TEXT NOT NULL, IpAddress TEXT NULL)";
+                await command.ExecuteNonQueryAsync();
+            }
+            await using (var command = connection.CreateCommand())
+            {
                 command.CommandText = "ALTER TABLE MondayLine ADD COLUMN PieceCount INTEGER NOT NULL DEFAULT 0";
+                try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
+            }
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "ALTER TABLE Sale ADD COLUMN PaymentStatus TEXT NOT NULL DEFAULT 'UNPAID'";
                 try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
             }
             await using (var command = connection.CreateCommand())

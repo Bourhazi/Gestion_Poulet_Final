@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor(); builder.Services.AddScoped<ICurrentUser, CurrentUser>();
-builder.Services.AddMediatR(c => { c.RegisterServicesFromAssemblyContaining<GetSnapshot>(); c.AddOpenBehavior(typeof(TransactionBehavior<,>)); });
+builder.Services.AddMediatR(c => { c.RegisterServicesFromAssemblyContaining<GetSnapshot>(); c.AddOpenBehavior(typeof(TransactionBehavior<,>)); c.AddOpenBehavior(typeof(AuditBehavior<,>)); });
 builder.Services.AddAntiforgery(o => o.HeaderName = "X-CSRF-TOKEN");
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")));
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(o =>

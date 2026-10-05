@@ -14,6 +14,7 @@ public sealed record AddMondayLine(int SaleId, string? ClientName, decimal Quant
 public sealed record MondayTransferInput(int ChamberId, decimal Quantity);
 public sealed record TransferMondayStock(int SaleId, DateOnly Date, string? Notes, List<MondayTransferInput> Transfers) : IRequest<int>, ICommand;
 public sealed record TogglePayment(int SaleId, int LineId) : IRequest<bool>, ICommand;
+public sealed record SetSalePaymentStatus(int SaleId, string PaymentStatus) : IRequest<string>, ICommand;
 public sealed record DeleteEntity(string Kind, int Id, int? ParentId = null) : IRequest<bool>, ICommand;
 public sealed record Login(string Username, string Password) : IRequest<UserDto>;
 public sealed record AddUser(string Username, string Password, string Role, int? ClientId) : IRequest<int>, ICommand;
@@ -86,7 +87,7 @@ public sealed class PurchaseHandler(IRepository db) : IRequestHandler<SavePurcha
         if (r.Id == 0) db.Add(e); await db.Save(ct); return e.Id;
     }
 }
-public sealed class SaleHandlers(IRepository db, ICurrentUser user) : IRequestHandler<AddSale, int>, IRequestHandler<AddMondayLine, int>, IRequestHandler<TogglePayment, bool>, IRequestHandler<TransferMondayStock, int>
+public sealed class SaleHandlers(IRepository db, ICurrentUser user) : IRequestHandler<AddSale, int>, IRequestHandler<AddMondayLine, int>, IRequestHandler<TogglePayment, bool>, IRequestHandler<TransferMondayStock, int>, IRequestHandler<SetSalePaymentStatus, string>
 {
     public async Task<int> Handle(AddSale r, CancellationToken ct)
     {
@@ -134,6 +135,16 @@ public sealed class SaleHandlers(IRepository db, ICurrentUser user) : IRequestHa
     {
         var e = await db.Find<Sale>(r.SaleId, ct) ?? throw new BusinessException("Sale not found."); var line = e.Lines.SingleOrDefault(l => l.Id == r.LineId) ?? throw new BusinessException("Line not found.");
         line.Paid = !line.Paid; await db.Save(ct); return line.Paid;
+    }
+    public async Task<string> Handle(SetSalePaymentStatus r, CancellationToken ct)
+    {
+        Rules.Require(r.PaymentStatus is "PAID" or "UNPAID", "Invalid payment status.");
+        var sale = await db.Find<Sale>(r.SaleId, ct) ?? throw new BusinessException("Sale not found.");
+        Rules.Require(sale.Type != "lundi", "Manage payment per order in a Monday lot.");
+        var previous = sale.PaymentStatus;
+        sale.PaymentStatus = r.PaymentStatus;
+        db.Add(new AuditLog { Date = DateTimeOffset.UtcNow, UserId = user.Id == 0 ? null : user.Id, Action = "Updated", Module = "Sale", EntityType = "Sale", EntityId = sale.Id, OldValues = $"{{\"paymentStatus\":\"{previous}\"}}", NewValues = $"{{\"paymentStatus\":\"{sale.PaymentStatus}\",\"client\":\"{sale.ClientName ?? sale.ClientId?.ToString() ?? "Unknown"}\"}}", Description = $"Sale #{sale.Id} payment status changed from {previous} to {sale.PaymentStatus}.", IpAddress = user.IpAddress });
+        await db.Save(ct); return sale.PaymentStatus;
     }
     public async Task<int> Handle(TransferMondayStock r, CancellationToken ct)
     {

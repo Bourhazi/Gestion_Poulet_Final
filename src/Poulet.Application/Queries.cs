@@ -4,6 +4,12 @@ using Poulet.Domain;
 namespace Poulet.Application;
 
 public sealed record GetSnapshot : IRequest<Snapshot>;
+public sealed record GetAuditLogs(DateOnly? Date, int? UserId, string? Action, string? Module, string? EntityType) : IRequest<List<AuditLog>>;
+public sealed class GetAuditLogsHandler(IRepository db) : IRequestHandler<GetAuditLogs, List<AuditLog>>
+{
+    public async Task<List<AuditLog>> Handle(GetAuditLogs r, CancellationToken ct) => (await db.List<AuditLog>(ct))
+        .Where(x => (!r.Date.HasValue || DateOnly.FromDateTime(x.Date.LocalDateTime) == r.Date) && (!r.UserId.HasValue || x.UserId == r.UserId) && (string.IsNullOrEmpty(r.Action) || x.Action == r.Action) && (string.IsNullOrEmpty(r.Module) || x.Module == r.Module) && (string.IsNullOrEmpty(r.EntityType) || x.EntityType == r.EntityType)).OrderByDescending(x => x.Date).ToList();
+}
 public sealed class GetSnapshotHandler(IRepository db, ICurrentUser user) : IRequestHandler<GetSnapshot, Snapshot>
 {
     public async Task<Snapshot> Handle(GetSnapshot request, CancellationToken ct)
@@ -38,7 +44,7 @@ public sealed class GetReportHandler(IRepository db) : IRequestHandler<GetReport
         var losses = purchases.Sum(p => p.DepartureWeight.HasValue && p.ActualWeight.HasValue ? Math.Max(p.DepartureWeight.Value - p.ActualWeight.Value, 0) * p.UnitPrice : 0);
         return new {
             request.From, request.To, ChickenKg = sales.Sum(s => s.Type == "lundi" ? s.Lines.Sum(l => l.Quantity) : s.Quantity),
-            Revenue = revenue, CostOfGoods = cost, FeedCost = feedSold, FeedPeriodCost = feedPeriod, FeedStockCost = feedStock, OtherExpenses = crates, Losses = losses, CrateCost = crates, GrossProfit = revenue - cost, NetProfit = revenue - cost - feedSold - crates - losses,
+            Revenue = revenue, PaidAmount = sales.Sum(s => s.Type == "lundi" ? s.Lines.Where(l => l.Paid).Sum(l => l.Quantity * l.UnitPrice) : s.PaymentStatus == "PAID" ? Inventory.Revenue(s) : 0), UnpaidAmount = sales.Sum(s => s.Type == "lundi" ? s.Lines.Where(l => !l.Paid).Sum(l => l.Quantity * l.UnitPrice) : s.PaymentStatus == "UNPAID" ? Inventory.Revenue(s) : 0), CostOfGoods = cost, FeedCost = feedSold, FeedPeriodCost = feedPeriod, FeedStockCost = feedStock, OtherExpenses = crates, Losses = losses, CrateCost = crates, GrossProfit = revenue - cost, NetProfit = revenue - cost - feedSold - crates - losses,
             PaidMonday = sales.SelectMany(s => s.Lines).Where(l => l.Paid).Sum(l => l.Quantity * l.UnitPrice),
             UnpaidMonday = sales.SelectMany(s => s.Lines).Where(l => !l.Paid).Sum(l => l.Quantity * l.UnitPrice),
             ByDay = sales.Select(s => new { s.Date, Revenue = Inventory.Revenue(s) }).GroupBy(s => s.Date).OrderBy(g => g.Key).Select(g => new { Date = g.Key, Revenue = g.Sum(s => s.Revenue) }),
