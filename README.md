@@ -25,6 +25,19 @@ Open http://127.0.0.1:5173. Development login: **admin / admin123**. Vite proxie
 
 Windows shortcut: `./start.ps1` starts both processes; Ctrl+C stops the process trees it created. `./publish.ps1` creates a combined API + React publish directory at `artifacts/app` without deploying it. Stop the Vite development server before publishing on Windows, because `npm ci` replaces native dependency files that a running server can lock.
 
+## Assistant d’analyse
+
+Les administrateurs disposent d’un bouton **Assistant** qui peut répondre en français aux questions sur les achats, ventes, stock, alimentation et bénéfice net estimé. L’assistant ne reçoit jamais un accès direct à SQLite : il ne peut appeler que des résumés d’analyse prévus par l’API.
+
+Configurez une clé OpenAI uniquement sur le serveur, puis redémarrez l’API :
+
+```powershell
+$env:OpenAI__ApiKey = "votre-cle-api"
+# Facultatif : $env:OpenAI__Model = "gpt-6-astra"
+```
+
+Ne placez jamais cette clé dans `web/`, dans Git, ou dans le navigateur. Sans clé, le bouton reste visible pour l’administrateur mais indique clairement que l’assistant doit être configuré.
+
 ## Architecture
 
 ```text

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useWorkspace } from "../app/AppContext";
 import { LanguageSelect } from "../components/LanguageSelect";
 import { PageToolbar } from "./PageToolbar";
+import { AssistantChat } from "../components/AssistantChat";
 export function AppLayout({
   children,
   dialogs,
@@ -101,6 +102,7 @@ export function AppLayout({
       </main>
 
       {dialogs}
+      {user.role === "admin" && <AssistantChat />}
     </div>
   );
 }
