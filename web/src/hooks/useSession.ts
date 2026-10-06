@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, refreshCsrf } from "../services/api";
+import { api, refreshCsrf, refreshSession } from "../services/api";
 import type { Snapshot, User } from "../types/models";
 type Dependencies = {
   setPage: (page: string) => void;
@@ -15,7 +15,15 @@ export function useSession({ setPage, setError, setBusy }: Dependencies) {
   }
   useEffect(() => {
     let alive = true;
-    api<User>("/auth/me")
+    const load = async () => {
+      try {
+        return await api<User>("/auth/me");
+      } catch {
+        if (!(await refreshSession())) throw new Error("No active session.");
+        return api<User>("/auth/me");
+      }
+    };
+    load()
       .then(async (u) => {
         const snapshot = await api<Snapshot>("/snapshot");
         if (alive) {

@@ -1,15 +1,14 @@
 import { useAppContext } from "../app/AppContext";
 import { LanguageSelect } from "../components/LanguageSelect";
+import { BrandLogo } from "../components/BrandLogo";
 export function LoginPage() {
   const { t, error, busy, login } = useAppContext();
 
   return (
     <main className="login">
       <div className="login-card">
-        <div className="brand">
-          <span>P</span> POULET
-        </div>
-        <p className="eyebrow">GESTION COMMERCIALE</p>
+        <BrandLogo className="login-logo" />
+        <p className="eyebrow">POULTRY BUSINESS MANAGEMENT</p>
         <h1>{t("login")}</h1>
         <LanguageSelect />
         {error && (

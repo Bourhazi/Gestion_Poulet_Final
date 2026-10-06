@@ -99,6 +99,16 @@ public static class DependencyInjection
                 command.CommandText = "ALTER TABLE Purchase ADD COLUMN PieceCount INTEGER NOT NULL DEFAULT 0";
                 try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
             }
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "ALTER TABLE User ADD COLUMN RefreshTokenHash TEXT NULL";
+                try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
+            }
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "ALTER TABLE User ADD COLUMN RefreshTokenExpiresAt TEXT NULL";
+                try { await command.ExecuteNonQueryAsync(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
+            }
         }
         finally { if (close) await connection.CloseAsync(); }
     }

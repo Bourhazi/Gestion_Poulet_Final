@@ -1,39 +1,53 @@
 using System.Security.Claims;
+using System.Text;
 using System.Threading.RateLimiting;
 using MediatR;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Poulet.Api.Security;
 using Poulet.Application;
 using Poulet.Domain;
 using Poulet.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+if (string.IsNullOrWhiteSpace(jwt.Secret) || Encoding.UTF8.GetByteCount(jwt.Secret) < 32)
+    throw new InvalidOperationException("Jwt__Secret must be configured through environment variables and contain at least 32 bytes.");
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddHttpClient("openai", client => client.Timeout = TimeSpan.FromSeconds(45));
 builder.Services.AddHttpContextAccessor(); builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddMediatR(c => { c.RegisterServicesFromAssemblyContaining<GetSnapshot>(); c.AddOpenBehavior(typeof(TransactionBehavior<,>)); c.AddOpenBehavior(typeof(AuditBehavior<,>)); });
 builder.Services.AddAntiforgery(o => o.HeaderName = "X-CSRF-TOKEN");
-builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")));
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(o =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o =>
 {
-    o.Cookie.Name = "poulet.session"; o.Cookie.HttpOnly = true; o.Cookie.SameSite = SameSiteMode.Strict;
-    o.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-    o.ExpireTimeSpan = TimeSpan.FromHours(8);
-    o.Events.OnRedirectToLogin = c => { c.Response.StatusCode = 401; return Task.CompletedTask; };
-    o.Events.OnRedirectToAccessDenied = c => { c.Response.StatusCode = 403; return Task.CompletedTask; };
-    o.Events.OnValidatePrincipal = async c =>
+    o.TokenValidationParameters = new TokenValidationParameters
     {
-        var db = c.HttpContext.RequestServices.GetRequiredService<IRepository>();
-        var id = int.TryParse(c.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var parsed) ? parsed : 0;
-        var u = await db.Find<User>(id, c.HttpContext.RequestAborted);
-        if (u == null || c.Principal?.FindFirstValue("stamp") != SessionStamp.Create(u.PasswordHash)) { c.RejectPrincipal(); await c.HttpContext.SignOutAsync(); }
+        ValidateIssuer = true, ValidIssuer = jwt.Issuer, ValidateAudience = true, ValidAudience = jwt.Audience,
+        ValidateIssuerSigningKey = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
+        ValidateLifetime = true, ClockSkew = TimeSpan.Zero, NameClaimType = ClaimTypes.Name, RoleClaimType = ClaimTypes.Role
+    };
+    o.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = c => { c.Token = c.Request.Cookies["poulet.access"]; return Task.CompletedTask; },
+        OnTokenValidated = async c =>
+        {
+            var db = c.HttpContext.RequestServices.GetRequiredService<IRepository>();
+            var id = int.TryParse(c.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var parsed) ? parsed : 0;
+            var u = await db.Find<User>(id, c.HttpContext.RequestAborted);
+            if (u == null || c.Principal?.FindFirstValue("stamp") != SessionStamp.Create(u.PasswordHash)) c.Fail("Invalid session.");
+        }
     };
 });
 builder.Services.AddAuthorization(o => o.AddPolicy("admin", p => p.RequireRole("admin")));
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(o => o.AddPolicy("web", p =>
+{
+    if (corsOrigins.Length > 0) p.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+}));
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = 429;
@@ -50,7 +64,7 @@ app.Use(async (ctx, next) =>
     catch (Microsoft.EntityFrameworkCore.DbUpdateException) { ctx.Response.StatusCode = 409; await ctx.Response.WriteAsJsonAsync(new { message = "This change conflicts with existing records." }); }
 });
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection(); }
-app.UseDefaultFiles(); app.UseStaticFiles(); app.UseRouting(); app.UseAuthentication(); app.UseAuthorization(); app.UseRateLimiter();
+app.UseDefaultFiles(); app.UseStaticFiles(); app.UseRouting(); app.UseCors("web"); app.UseAuthentication(); app.UseAuthorization(); app.UseRateLimiter();
 app.Use(async (ctx, next) =>
 {
     if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Request.Method is "POST" or "PUT" or "DELETE")

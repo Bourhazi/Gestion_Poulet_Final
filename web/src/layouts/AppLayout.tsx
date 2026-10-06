@@ -3,6 +3,7 @@ import { useWorkspace } from "../app/AppContext";
 import { LanguageSelect } from "../components/LanguageSelect";
 import { PageToolbar } from "./PageToolbar";
 import { AssistantChat } from "../components/AssistantChat";
+import { BrandLogo } from "../components/BrandLogo";
 export function AppLayout({
   children,
   dialogs,
@@ -42,10 +43,10 @@ export function AppLayout({
   return (
     <div className="app">
       <aside>
-        <div className="brand">
-          <span>P</span> POULET
+        <div className="sidebar-brand">
+          <BrandLogo />
         </div>
-        <p className="eyebrow">GESTION COMMERCIALE</p>
+        <p className="eyebrow">POULTRY BUSINESS MANAGEMENT</p>
         <nav>
           {pages.map((p, i) => (
             <button
@@ -68,8 +69,11 @@ export function AppLayout({
       </aside>
       <main>
         <header className="topbar">
-          <span>{t(page)}</span>
-          <div>
+          <div className="topbar-context">
+            <strong>DajajPro</strong>
+            <span>{t(page)}</span>
+          </div>
+          <div className="topbar-actions">
             <LanguageSelect />
             <button className="quiet" onClick={() => setDark(!dark)}>
               {dark ? "☀" : "◐"} {t("dark")}
@@ -79,7 +83,7 @@ export function AppLayout({
         <div className="workspace">
           <div className="page-title">
             <div>
-              <p className="eyebrow">POULET / {t(page)}</p>
+              <p className="eyebrow">DAJAJPRO / {t(page)}</p>
               <h1>{t(page)}</h1>
             </div>
             {canAdd && (

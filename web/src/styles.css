@@ -1,24 +1,24 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 :root {
   font-family: "DM Sans", sans-serif;
-  color: #24342f;
-  background: #f4f6f3;
-  --bg: #f4f6f3;
+  color: #142b42;
+  background: #f6f8f6;
+  --bg: #f6f8f6;
   --surface: #fff;
-  --text: #24342f;
-  --muted: #76817b;
-  --border: #e3e8e2;
-  --green: #246747;
-  --accent: #f1be53;
+  --text: #142b42;
+  --muted: #63717d;
+  --border: #dfe7e1;
+  --green: #23833c;
+  --accent: #eea51b;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --bg: #121e19;
-  --surface: #1d2b23;
-  --text: #e6eee8;
-  --muted: #9cad9f;
-  --border: #334439;
-  --green: #78c396;
+  --bg: #101c29;
+  --surface: #182838;
+  --text: #edf4ef;
+  --muted: #a9b8be;
+  --border: #334655;
+  --green: #71c88a;
   color-scheme: dark;
   color: var(--text);
   background: var(--bg);
@@ -99,34 +99,27 @@ label {
 }
 .app > aside {
   width: 242px;
-  background: #173c2a;
+  background: #0b2e4f;
   color: #e5ede7;
   position: fixed;
   inset-block: 0;
   inset-inline-start: 0;
-  padding: 30px 22px;
+  padding: 24px 22px;
   display: flex;
   flex-direction: column;
   z-index: 10;
 }
-.brand {
-  font-family: Manrope, sans-serif;
-  font-weight: 800;
-  letter-spacing: 3px;
+.sidebar-brand {
   display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 21px;
+  justify-content: center;
 }
-.brand > span {
-  display: grid;
-  place-items: center;
-  background: var(--accent);
-  color: #173c2a;
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  letter-spacing: 0;
+.brand-logo {
+  display: block;
+  width: min(100%, 178px);
+  height: auto;
+  max-height: 142px;
+  object-fit: contain;
+  object-position: center;
 }
 .eyebrow {
   font-size: 10px;
@@ -137,9 +130,10 @@ label {
   margin: 14px 0 22px;
 }
 .app > aside .eyebrow {
-  color: #9fbba8;
+  color: #b8ccdc;
   font-size: 9px;
-  margin-bottom: 30px;
+  margin: 8px 0 24px;
+  text-align: center;
 }
 .app nav {
   display: flex;
@@ -150,7 +144,7 @@ label {
 .app nav button {
   text-align: start;
   background: transparent;
-  color: #bcd0c2;
+  color: #d1dfeb;
   font-size: 13px;
   padding: 11px 12px;
   display: flex;
@@ -159,10 +153,10 @@ label {
 }
 .app nav button span {
   font-size: 10px;
-  color: #739780;
+  color: #85a8c5;
 }
 .app nav button.active {
-  background: #2b5540;
+  background: #174a72;
   color: white;
 }
 .app nav button.active span {
@@ -176,11 +170,11 @@ label {
   gap: 7px;
 }
 .sidebar-footer small {
-  color: #a2baa9;
+  color: #b8ccdc;
 }
 .sidebar-footer .quiet {
-  color: #c8dacd;
-  border-color: #345b43;
+  color: #d9e6ef;
+  border-color: #315a7d;
 }
 .app > main {
   margin-inline-start: 242px;
@@ -200,6 +194,19 @@ label {
 .topbar > div {
   display: flex;
   gap: 12px;
+}
+.topbar-context {
+  align-items: center;
+}
+.topbar-context strong {
+  color: #0b2e4f;
+  font-family: Manrope, sans-serif;
+  font-size: 15px;
+}
+.topbar-context span {
+  color: var(--muted);
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 12px;
 }
 .workspace {
   padding: 30px 40px 60px;
@@ -468,7 +475,7 @@ tr:hover td {
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse at top left, #dce9de, transparent 60%), var(--bg);
+    radial-gradient(ellipse at top left, #e1f0e4, transparent 60%), var(--bg);
   padding: 25px;
   gap: 18px;
 }
@@ -479,6 +486,15 @@ tr:hover td {
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: 0 25px 70px #1639260d;
+}
+.login-logo {
+  width: min(100%, 210px);
+  max-height: 190px;
+  margin: 0 auto;
+}
+.login-card > .eyebrow {
+  text-align: center;
+  margin: 3px 0 22px;
 }
 .login-card form {
   display: flex;
@@ -546,13 +562,14 @@ tr:hover td {
   .topbar {
     padding: 0 20px;
   }
-  .brand {
-    font-size: 17px;
+  .brand-logo {
+    width: min(100%, 148px);
+    max-height: 118px;
   }
-  .topbar > span {
+  .topbar-context span {
     display: none;
   }
-  .topbar > div {
+  .topbar-actions {
     margin-inline-start: auto;
   }
 }
@@ -579,6 +596,10 @@ tr:hover td {
   .sidebar-footer,
   .app > aside .eyebrow {
     display: none;
+  }
+  .brand-logo {
+    width: 122px;
+    max-height: 104px;
   }
   .app > main {
     margin: 0;

@@ -63,7 +63,16 @@ public sealed class MondayLine : Entity
 }
 public sealed class MondayTransfer : Entity { public int SaleId { get; set; } public DateOnly Date { get; set; } public int ChamberId { get; set; } public decimal Quantity { get; set; } public string ChickenType { get; set; } = "normal"; public decimal UnitCost { get; set; } public int UserId { get; set; } public string? Notes { get; set; } }
 public sealed class ChickenPiece : Entity { public int MondayLineId { get; set; } public string Number { get; set; } = ""; }
-public sealed class User : Entity { public string Username { get; set; } = ""; public string PasswordHash { get; set; } = ""; public string Role { get; set; } = "grossiste"; public int? ClientId { get; set; } }
+public sealed class User : Entity
+{
+    public string Username { get; set; } = "";
+    public string PasswordHash { get; set; } = "";
+    public string Role { get; set; } = "grossiste";
+    public int? ClientId { get; set; }
+    // Only a digest of the refresh token is persisted, never the token itself.
+    public string? RefreshTokenHash { get; set; }
+    public DateTimeOffset? RefreshTokenExpiresAt { get; set; }
+}
 public sealed class AuditLog : Entity
 {
     public DateTimeOffset Date { get; set; }

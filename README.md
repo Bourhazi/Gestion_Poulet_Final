@@ -21,7 +21,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. Development login: **admin / admin123**. Vite proxies `/api` to http://localhost:5080, so the browser uses same-origin cookies and CSRF protection.
+Set `Jwt__Secret` before starting the API (see `.env.example`), then open http://127.0.0.1:5173. Development login: **admin / admin123**. Vite proxies `/api` to http://localhost:5080, so the browser uses same-origin cookies and CSRF protection.
 
 Windows shortcut: `./start.ps1` starts both processes; Ctrl+C stops the process trees it created. `./publish.ps1` creates a combined API + React publish directory at `artifacts/app` without deploying it. Stop the Vite development server before publishing on Windows, because `npm ci` replaces native dependency files that a running server can lock.
 
@@ -67,7 +67,7 @@ MediatR is explicitly pinned to 12.5.0; upgrade deliberately after reviewing the
 
 ## Features
 
-- Cookie authentication, admin/grossiste roles, password hashing/reset, logout, login rate limiting, CSRF protection and session invalidation after password changes.
+- JWT authentication in HttpOnly cookies, refresh-token rotation, admin/grossiste roles, password hashing/reset, logout, login rate limiting, CSRF protection and session invalidation after password changes.
 - Supplier/client/chamber CRUD, validated phones, used-record deletion guards, chamber stock/history/profitability.
 - Chicken purchases, edits, external client allocations, full quantity distribution, capacity validation aggregated across allocation lines, normal/BIBI stock separation, departure/actual weights.
 - Feed costs by chamber.
@@ -94,6 +94,33 @@ Frontend regression tests use the Node.js 24 test runner and cover form endpoint
 ## Financial calculation
 
 Sales store a purchase-cost estimate at creation time using the weighted average of chamber purchases (actual weight costs prorated by allocation). Monday COGS is recognized in proportion to kg actually sold; unconsumed reserved kg are not reported as sales. Reports include wholesale and retail chicken sales and the quantities actually sold from Monday lots. Net estimate subtracts COGS, feed and crate costs. This is an operational estimate rather than formal accounting; historical purchase edits do not restate cost snapshots, and backdated entries do not produce FIFO valuation.
+
+## Authentication API
+
+The API uses a 15-minute signed access JWT in the `poulet.access` HttpOnly cookie and a rotating seven-day `poulet.refresh` HttpOnly cookie. Neither token is returned in JSON or stored in `localStorage`. Cookies are `SameSite=Strict`; they are `Secure` outside development. Passwords use ASP.NET Core Identity's PBKDF2 password hasher and are never returned.
+
+Set these server-only environment variables (the `.env.example` file contains placeholders only):
+
+```powershell
+$env:Jwt__Secret = "a-random-secret-of-at-least-32-bytes"
+$env:Jwt__Issuer = "Poulet.Api"
+$env:Jwt__Audience = "Poulet.Web"
+$env:Jwt__AccessTokenMinutes = "15"
+$env:Jwt__RefreshTokenDays = "7"
+$env:Cors__AllowedOrigins__0 = "https://app.example.com"
+```
+
+All state-changing requests require the CSRF token from `GET /api/auth/csrf` in the `X-CSRF-TOKEN` header. The React client does this automatically.
+
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `POST /api/auth/login` | anonymous + CSRF | Validates credentials and sets the two cookies. Body: `{ "username": "admin", "password": "…" }` |
+| `POST /api/auth/refresh` | refresh cookie + CSRF | Rotates the refresh token and issues a new access JWT. |
+| `POST /api/auth/logout` | authenticated + CSRF | Revokes the stored refresh token and clears cookies. |
+| `GET /api/auth/me` | authenticated | Returns the connected user's safe profile. |
+| `POST /api/auth/register` | admin + CSRF | Provisions an account using the existing `{ username, password, role, clientId }` validation. |
+
+Login attempts are rate limited per IP. Missing, invalid, revoked, or expired access tokens receive `401`; administrator-only routes receive `403` for other roles. Authentication errors deliberately contain no credential, token, or signing-key detail.
 
 ## Deployment and boundaries
 

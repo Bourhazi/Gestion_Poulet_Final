@@ -185,6 +185,6 @@ public sealed class UserHandlers(IRepository db, IPasswords passwords) : IReques
     }
     public async Task<bool> Handle(ResetPassword r, CancellationToken ct)
     {
-        Rules.Require(r.Password is { Length: >= 8 }, "Password must contain at least 8 characters."); var u = await db.Find<User>(r.Id, ct) ?? throw new BusinessException("User not found."); u.PasswordHash = passwords.Hash(r.Password); await db.Save(ct); return true;
+        Rules.Require(r.Password is { Length: >= 8 }, "Password must contain at least 8 characters."); var u = await db.Find<User>(r.Id, ct) ?? throw new BusinessException("User not found."); u.PasswordHash = passwords.Hash(r.Password); u.RefreshTokenHash = null; u.RefreshTokenExpiresAt = null; await db.Save(ct); return true;
     }
 }

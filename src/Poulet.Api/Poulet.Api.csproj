@@ -6,5 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <ItemGroup><ProjectReference Include="../Poulet.Application/Poulet.Application.csproj" /><ProjectReference Include="../Poulet.Infrastructure/Poulet.Infrastructure.csproj" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Poulet.Application/Poulet.Application.csproj" />
+    <ProjectReference Include="../Poulet.Infrastructure/Poulet.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+  </ItemGroup>
 </Project>

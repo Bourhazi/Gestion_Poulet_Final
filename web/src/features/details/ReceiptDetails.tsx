@@ -22,7 +22,7 @@ export function ReceiptDetails({
   return (
     <div className="receipt">
       <p className="eyebrow">
-        POULET · {t("receipt")} #{s.id}
+        DajajPro · {t("receipt")} #{s.id}
         {line ? ` / ${line.id}` : ""}
       </p>
       <h2>{t("receipt")}</h2>

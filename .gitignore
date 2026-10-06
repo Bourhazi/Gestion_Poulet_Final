@@ -11,5 +11,6 @@ web/refactor-staging/
 .npm-cache/
 **/*.tsbuildinfo
 artifacts/
+.env
 src/Poulet.Api/wwwroot/*
 !src/Poulet.Api/wwwroot/README.txt
